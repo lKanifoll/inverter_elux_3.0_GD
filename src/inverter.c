@@ -109,13 +109,13 @@ static MenuItem_t _presetViewMenu =
 	{511, 0, NULL, 					NULL, NULL, NULL };
 
 static MenuItem_t _selectModeMenu = 
-	{530, 4, NULL, 					NULL, NULL, NULL };
+	{530, 0, NULL, 					TempMinus, TempPlus, NULL };
 
 // Program menu
 static MenuItem_t _programMenu[] = {
 	{51, 7, NULL, 					NULL, NULL, NULL }, // Setup
 	{52, 0, NULL, 					On, Off, NULL }, // Calendar
-	{53, 24, NULL, 					CustomPrev, CustomNext, NULL }, // Custom day
+	{53, 24, NULL, CustomPrev, CustomNext, NULL }, // Custom day
 };
 
 // Main menu
@@ -541,12 +541,12 @@ void DrawCustomDay(int _old = -1)
 			int cY = iy * 40 + 60;
 
 			char buf[4];
-			sprintf(buf, "%d", i);
+			sprintf(buf, "%d",i);
 			if (_pr->hour[i] > 3) _pr->hour[i] = pEco;
 			if (i == _old || currentMenu->selected == i || _old == -1)
-				DrawTextAligment(cX, cY, 42, 32, buf, false, false, (currentMenu->selected == i) ? 2 : ((_pr->hour[i] == 3) ? 2 : 0) , MAIN_COLOR, modeColors[_pr->hour[i]]);		
-		}//(currentMenu->selected == i) ? 0 : ((_pr->hour[i] == 3) ? 2 : 0)
-	}//(currentMenu->selected == i) ? 2 : 0
+				DrawTextAligment(cX, cY, 42, 32, buf, false, false, (currentMenu->selected == i) ? 2 : 0 , MAIN_COLOR, modeColors[(_settings.week_schedule[0].hour[i]<11 ? 2 : 0)]);		
+		}
+	}
 }
 
 void CustomNext()
@@ -963,7 +963,8 @@ void DrawEditParameter()
 			break;
 		case 530: // custom day select mode
 			DrawLeftRight();
-
+			DrawTemperature(_tempConfig.desired, -25, 15);
+		/*
 			switch (currentMenu->selected)
 			{
 				case pComfort:
@@ -982,7 +983,7 @@ void DrawEditParameter()
 					if (pxs.sizeCompressedBitmap(width, height, img_menu_program_off_png_comp) == 0) pxs.drawCompressedBitmap(320 / 2 - width / 2, 240 / 2 - height / 2, img_menu_program_off_png_comp);
 					DrawMenuText("Off");
 					break;
-			}
+			}*/
 			break;
 		default:
 			DrawMenuText("Not implemented");
@@ -1060,7 +1061,8 @@ void PrepareEditParameter()
 			break;
 		case 53: // custom day
 			currentMenu->selected = 0;
-			break;
+
+			break;		
 		case 510: // presets
 			currentMenu->selected = 0;
 			break;
@@ -1292,10 +1294,15 @@ void AcceptParameter()
 			uint8_t select = currentMenu->selected;
 			_selectModeMenu.parent = currentMenu;
 			currentMenu = &_selectModeMenu;
-			currentMenu->selected = _settings.custom.hour[select];
+			currentMenu->selected = select;//_settings.custom.hour[select];
+		
+			_tempConfig.desired = _settings.week_schedule[0].hour[select];
+			_tempConfig.min = 0;
+			_tempConfig.max = 40;
 			break;
 		case 530: // custom day
-			_settings.custom.hour[currentMenu->parent->selected] = currentMenu->selected;
+			_settings.week_schedule[0].hour[currentMenu->selected] = _tempConfig.desired;
+
 			GoOK();
 			break;
 		case 51: // presets
@@ -2425,6 +2432,22 @@ void ResetAllSettings()
 	_settings.calendar[4] = 3;
 	_settings.calendar[5] = 3;
 	_settings.calendar[6] = 3;
+	
+		memset(&_settings.week_schedule, 5, sizeof(_settings.week_schedule));
+	_settings.week_schedule[0].hour[3] = 30;
+	_settings.week_schedule[0].hour[4] = 10;
+	/*
+	 _settings.week_schedule[7] = {
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }
+  };
+	*/
+	
 	memset(&_settings.custom, pEco, sizeof(_settings.custom));
 	_settings.timerOn = 0;
 	_settings.timerTime = 12 * 60; // 12:00

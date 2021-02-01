@@ -163,6 +163,21 @@
           <WinNumber>1</WinNumber>
           <ItemText>temp_current,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>currentMenu-&gt;ID,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>currentMenu-&gt;selected,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>5</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>currentMenu-&gt;selected</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
