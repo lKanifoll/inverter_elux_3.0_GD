@@ -526,6 +526,14 @@ void MainScreen()
 		
 }
 
+void refresh_mainscreen()
+{
+	if(currentMenu != NULL)
+	{
+		currentMenu = NULL;
+		DrawMainScreen();
+	}
+}
 void DrawCustomDay(int _old = -1)
 {
 	struct Presets* _pr = NULL;
@@ -895,8 +903,8 @@ void DrawEditParameter()
 				if (_settings.calendar[i] > 7) _settings.calendar[i] = 0;
 				pxs.setColor(MAIN_COLOR);
 				pxs.setFont(ElectroluxSansRegular20a);
-				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y, 50, 30, (char*)_calendarInfo[i].week, false, false, 0);
-				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y + 30, 50, 50, (char*)_calendarPresetName[_settings.calendar[i]], (currentMenu->selected == i), i == (rtc_initpara.rtc_day_of_week -1) ? 1 : 0 , 2, 
+				//DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y, 50, 30, (char*)_calendarInfo[i].week, false, false, 0);
+				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y + 30, 65, 65,(char*)_calendarInfo[i].week/* (char*)_calendarPresetName[_settings.calendar[i]]*/, (currentMenu->selected == i), i == (rtc_initpara.rtc_day_of_week -1) ? 1 : 0 , 2, 
 					                 MAIN_COLOR, BG_COLOR );
 			}
 			break;
@@ -2002,13 +2010,16 @@ void DrawWifi()
 			_timerBlink += 500;
 		else if (wifi_status == 4)
 		{
-			//_blink = 0;
-			
-			if (_blink)
-				return;
+			if (_settings.workMode == WorkMode_Off)
+			{
+				pxs.drawCompressedBitmap(16, 59, (uint8_t*)img_wifi_png_comp);
+			}
 			else
-				_blink = false;
-			
+			{
+				pxs.drawCompressedBitmap(_xWifi + 6, 128, (uint8_t*)img_wifi_png_comp);
+			}
+      _timerBlink += 5000;			
+			return;			
 		}
 		//if (wifi_status != 4)
 		_blink = !_blink;

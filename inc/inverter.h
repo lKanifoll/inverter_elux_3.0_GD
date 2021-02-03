@@ -100,13 +100,13 @@ struct CalendarInfo
 };
 const struct CalendarInfo _calendarInfo[7] = 
 {
-	{"MO", 30, 30},
-	{"TU", 100, 30},
-	{"WE", 170, 30},
-	{"TH", 240, 30},
-	{"FR", 30, 130},
-	{"SA", 100, 130},
-	{"SU", 170, 130},
+	{"MO", 30, 20},
+	{"TU", 100, 20},
+	{"WE", 170, 20},
+	{"TH", 240, 20},
+	{"FR", 65, 110},
+	{"SA", 135, 110},
+	{"SU", 205, 110},
 };
 
 const struct Presets _presets[7] = {
@@ -191,7 +191,7 @@ void receive_uart_int(void);
 uint8_t bcdToDec(uint8_t val);
 uint8_t decToBcd(uint8_t val);
 //void drawRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t radius, int16_t thikness);
-
+void refresh_mainscreen();
 void CleanTemperature(int8_t temp, int8_t xo, int8_t yo);
 
 
