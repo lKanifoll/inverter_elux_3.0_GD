@@ -103,7 +103,7 @@ static MenuItem_t _settingsMenu[] = {
 };
 
 static MenuItem_t _presetMenu = 
-	{510, 8, NULL, 					NULL, NULL, NULL };
+	{510, 24, NULL, CustomPrev, CustomNext, NULL };
 
 static MenuItem_t _presetViewMenu = 
 	{511, 0, NULL, 					NULL, NULL, NULL };
@@ -115,7 +115,7 @@ static MenuItem_t _selectModeMenu =
 static MenuItem_t _programMenu[] = {
 	{51, 7, NULL, 					NULL, NULL, NULL }, // Setup
 	{52, 0, NULL, 					On, Off, NULL }, // Calendar
-	{53, 24, NULL, CustomPrev, CustomNext, NULL }, // Custom day
+	//{53, 24, NULL, CustomPrev, CustomNext, NULL }, // Custom day
 };
 
 // Main menu
@@ -124,7 +124,7 @@ static MenuItem_t _mainMenu[] = {
 	{2, 2, _powerMenu, 			NULL, NULL, NULL }, // Power
 	{3, 2, _timerMenu, 			NULL, NULL, NULL }, // Timer
 	{4, 4, _settingsMenu,		NULL, NULL, NULL }, // Settings
-	{5, 3, _programMenu, 		NULL, NULL, NULL }, // Program
+	{5, 2, _programMenu, 		NULL, NULL, NULL }, // Program
 };
 
 static MenuItem_t _menu = 
@@ -552,7 +552,7 @@ void DrawCustomDay(int _old = -1)
 			sprintf(buf, "%d",i);
 			if (_pr->hour[i] > 3) _pr->hour[i] = pEco;
 			if (i == _old || currentMenu->selected == i || _old == -1)
-				DrawTextAligment(cX, cY, 42, 32, buf, false, false, (currentMenu->selected == i) ? 2 : 0 , MAIN_COLOR, modeColors[(_settings.week_schedule[0].hour[i]<11 ? 2 : 0)]);		
+				DrawTextAligment(cX, cY, 42, 32, buf, false, false, (currentMenu->selected == i) ? 2 : 0 , MAIN_COLOR, modeColors[(_settings.week_schedule[_presetSet.week].hour[i]<11 ? 2 : 0)]);		
 		}
 	}
 }
@@ -909,6 +909,9 @@ void DrawEditParameter()
 			}
 			break;
 		case 510:
+			//DrawMenuTitle("CUSTOM 24h", -3);
+			DrawCustomDay();			
+			
 			switch (_presetSet.week)
 			{
 				case 0: DrawMenuTitle("Monday"); 		break;
@@ -919,7 +922,7 @@ void DrawEditParameter()
 				case 5: DrawMenuTitle("Saturday"); 	break;
 				case 6: DrawMenuTitle("Sunday"); 		break;
 			}
-			
+			/*
 			pxs.setFont(ElectroluxSansRegular20a);
 			for (int iy = 0; iy < 2; iy++)
 			{
@@ -931,7 +934,7 @@ void DrawEditParameter()
 					DrawTextAligment(cX, cY, 50, 50, (char*)_calendarPresetName[i], (currentMenu->selected == i), (_settings.calendar[_presetSet.week] == i), 2, 
 													 MAIN_COLOR,  BG_COLOR);
 				}
-			}
+			}*/
 			break;
 		case 511:
 			switch (_presetSet.preset)
@@ -1283,6 +1286,15 @@ void AcceptParameter()
 				GoOK();				
 			}
 			break;
+		case 51: // presets
+			
+			_presetSet.week = currentMenu->selected;
+			//_presetSet.preset = _settings.calendar[_presetSet.week];
+			_presetMenu.parent = currentMenu;
+			currentMenu = &_presetMenu;
+			currentMenu->selected = 0;		
+			break;
+		
 		case 52: // calendar
 			_settings.calendarOn = _onoffSet.parameter;		
 		  if(_settings.calendarOn)
@@ -1299,6 +1311,7 @@ void AcceptParameter()
 			GoOK();	
 			break;
 		case 53: // custom day
+			/*
 			uint8_t select = currentMenu->selected;
 			_selectModeMenu.parent = currentMenu;
 			currentMenu = &_selectModeMenu;
@@ -1306,25 +1319,23 @@ void AcceptParameter()
 		
 			_tempConfig.desired = _settings.week_schedule[0].hour[select];
 			_tempConfig.min = 0;
-			_tempConfig.max = 40;
+			_tempConfig.max = 40;*/
 			break;
 		case 530: // custom day
-			_settings.week_schedule[0].hour[currentMenu->selected] = _tempConfig.desired;
+			_settings.week_schedule[_presetSet.week].hour[currentMenu->selected] = _tempConfig.desired;
 
 			GoOK();
 			break;
-		case 51: // presets
-			_presetSet.week = currentMenu->selected;
-			_presetSet.preset = _settings.calendar[_presetSet.week];
-			_presetMenu.parent = currentMenu;
-			currentMenu = &_presetMenu;
-			currentMenu->selected = 0;
-			break;
+
 		case 510: // presets
-			_presetSet.preset = currentMenu->selected;
-			_presetViewMenu.parent = currentMenu;
-			currentMenu = &_presetViewMenu;
-			currentMenu->selected = 0;
+			uint8_t select = currentMenu->selected;
+			_selectModeMenu.parent = currentMenu;
+			currentMenu = &_selectModeMenu;
+			currentMenu->selected = select;//_settings.custom.hour[select];
+		
+			_tempConfig.desired = _settings.week_schedule[_presetSet.week].hour[select];
+			_tempConfig.min = 0;
+			_tempConfig.max = 40;	
 			break;
 		case 511: // presets
 			_settings.calendar[_presetSet.week] = _presetSet.preset;
@@ -2845,6 +2856,15 @@ void open_window_func()
 	}	
 }
 
+void set_watchdog()
+{
+    rcu_osci_on(RCU_IRC40K);
+    /* wait till IRC40K is ready */
+    while(ERROR == rcu_osci_stab_wait(RCU_IRC40K));
+	  fwdgt_config(625, FWDGT_PSC_DIV64);
+    fwdgt_enable();
+}
+
 void loop(void)
 {
 	uint8_t* p = (uint8_t*)&_settings;
@@ -2890,7 +2910,7 @@ void loop(void)
 	
   idleTimeout = GetSystemTick();
 
-	
+	set_watchdog();
 	while (1)
   {
 		
@@ -2901,6 +2921,7 @@ void loop(void)
 			_key_down.update();
 			_key_up.update();
 		
+		fwdgt_counter_reload();
 		
 		if(RESET != rtc_flag_get(RTC_STAT_ALRM0F))
 		{
@@ -3413,22 +3434,22 @@ void loop(void)
 					power_level_auto = powerLevel;	
 					query_settings();
 				}	
-					if (currentMenu == NULL && !_error && (!window_is_opened))
+				if (currentMenu == NULL && !_error && (!window_is_opened))
+				{
+					for (int i = 0; i <= 5; i++)
 					{
-						for (int i = 0; i <= 5; i++)
+						if(i < powerLevel)
 						{
-							if(i < powerLevel)
-							{
-								pxs.setColor(powerLevelColors[i]); 
-								pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
-							}
-							else
-							{
-								pxs.setColor(BG_COLOR); 
-								pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
-							}
+							pxs.setColor(powerLevelColors[i]); 
+							pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
 						}
-					}					
+						else
+						{
+							pxs.setColor(BG_COLOR); 
+							pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+						}
+					}
+				}					
 				if(refresh_system)
 				{
 					idleTimeout = GetSystemTick();

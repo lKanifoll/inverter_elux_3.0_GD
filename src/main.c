@@ -50,6 +50,7 @@ void heat_timer_config(void);
 void i2c_config(void);
 void RTC_config(void);
 
+
 uint32_t sck;
 
 int main(void)
@@ -113,7 +114,7 @@ void rcu_config(void)
 	 
     // ADCCLK = PCLK2/6 
     rcu_adc_clock_config(RCU_ADCCK_APB2_DIV6);
-
+		rcu_periph_clock_enable(RCU_WWDGT);
 }
 
 
@@ -384,4 +385,6 @@ void RTC_config(void)
     rtc_register_sync_wait();
 	  
 }
+
+
 
