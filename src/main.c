@@ -375,15 +375,14 @@ void heat_timer_config(void)
 void RTC_config(void)
 {
 	  rcu_periph_clock_enable(RCU_PMU);
-    pmu_backup_write_enable();
-		rcu_osci_on(RCU_LXTAL);
-		/* wait till LXTAL is ready */
-		rcu_osci_stab_wait(RCU_LXTAL);
-		/* select the RTC clock source */
-		rcu_rtc_clock_config(RCU_RTCSRC_LXTAL);
+    pmu_backup_write_enable();		
+	
+	  rcu_osci_on(RCU_LXTAL);
+	  rcu_osci_stab_wait(RCU_LXTAL);
+	  rcu_rtc_clock_config(RCU_RTCSRC_LXTAL);
+
     rcu_periph_clock_enable(RCU_RTC);
     rtc_register_sync_wait();
-	  
 }
 
 

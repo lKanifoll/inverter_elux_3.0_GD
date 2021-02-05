@@ -1688,11 +1688,6 @@ void TIMER_Heat_callback()
 			_currentPowerTicks = 20;
 }
 
-
-
-
-
-
 void rtc_alarm_callback()
 {
 
@@ -2858,10 +2853,9 @@ void open_window_func()
 
 void set_watchdog()
 {
-    rcu_osci_on(RCU_IRC40K);
-    /* wait till IRC40K is ready */
-    while(ERROR == rcu_osci_stab_wait(RCU_IRC40K));
-	  fwdgt_config(625, FWDGT_PSC_DIV64);
+		rcu_osci_on(RCU_IRC40K);
+	  while(ERROR == rcu_osci_stab_wait(RCU_IRC40K));
+	  fwdgt_config(6553, FWDGT_PSC_DIV64);
     fwdgt_enable();
 }
 
@@ -2912,37 +2906,19 @@ void loop(void)
 
 	set_watchdog();
 	while (1)
-  {
-		
-			_key_window.update();
-			_key_power.update();
-			_key_menu.update();
-			_key_back.update();
-			_key_down.update();
-			_key_up.update();
-		
-		fwdgt_counter_reload();
+  {	
+		_key_window.update();
+		_key_power.update();
+		_key_menu.update();
+		_key_back.update();
+		_key_down.update();
+		_key_up.update();
 		
 		if(RESET != rtc_flag_get(RTC_STAT_ALRM0F))
 		{
 			rtc_flag_clear(RTC_STAT_ALRM0F);
 			rtc_alarm_callback();
 		}
-		
-		
-		/*
-		static int keyTimer = 0;
-		if (keyTimer-- <= 0)
-		{
-			_key_window.update();
-			_key_power.update();
-			_key_menu.update();
-			_key_back.update();
-			_key_down.update();
-			_key_up.update();
-
-			keyTimer = 5;
-		}*/
 
     receive_uart_int();
 
@@ -3212,8 +3188,6 @@ void loop(void)
 			{
 				_stateBrightness = StateBrightness_OFF;
 				smooth_backlight(0);
-	
-				//LL_GPIO_ResetOutputPin(LCD_BL_GPIO_Port, LCD_BL_Pin);
 			}
 			else if ((GetSystemTick() > idleTimeout + 15000) && (_stateBrightness == StateBrightness_ON))
 			{
@@ -3230,10 +3204,7 @@ void loop(void)
 		{
 			MainScreen();
 		}
-		if ((GetSystemTick() > (idleTimeout + 5000)) && (_settings.brightness == 0) && (_stateBrightness < StateBrightness_OFF) /*&& (!_settings.displayAutoOff)*/) // If 50% brightness, back from 100% to 50% after 5s
-		{
-			//_stateBrightness = StateBrightness_LOW;
-		}		
+		
 
 		
 		
@@ -3465,6 +3436,7 @@ void loop(void)
 //========================================================= refrash 1 sec		
 		if (GetSystemTick() > refrash_time && _settings.on)
 		{	
+			fwdgt_counter_reload();
 			
 			if(currentMenu->ID == 4431)
 			{
