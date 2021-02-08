@@ -23,7 +23,8 @@ extern "C" {
 #define CMD_OUTPUT  	0x07	
 	
 #define CMD_QUERY			0x08
-	
+#define CMD_DATETIME	0x1C
+
 #define ID_SWITCH			0x01
 #define ID_CURRTEMP		0x03
 #define ID_WORKMODE		0x04
@@ -33,6 +34,7 @@ extern "C" {
 #define	ID_REMTIME		0x14
 #define ID_FAULT			0x15
 #define	ID_SCHEDULE		0x1A
+
 #define ID_COMFORT		0x65
 #define ID_ECO				0x66
 #define ID_ANTIFR			0x67
@@ -51,7 +53,7 @@ void usart_transmit_frame(const uint8_t *buff, size_t len);
 void query_settings();	
 void reset_wifi_state();
 void query_faults();
-	
+void query_datetime();
 	
 #ifdef __cplusplus
 }

@@ -2413,7 +2413,7 @@ void InitTimer()
     rtc_alarm.rtc_alarm_second = 0x00;
 		rtc_alarm.rtc_alarm_mask = RTC_ALARM_MINUTE_MASK | RTC_ALARM_HOUR_MASK | RTC_ALARM_SECOND_MASK | RTC_ALARM_DATE_MASK;
 		
-		_settings.workMode = getCalendarMode();
+		
 		rtc_alarm.rtc_weekday_or_date = RTC_ALARM_WEEKDAY_SELECTED;
 		rtc_alarm.rtc_alarm_day = RTC_WEDSDAY;
 		rtc_alarm_config(&rtc_alarm);
@@ -2663,6 +2663,7 @@ void startScreen()
 void deviceON()
 {
 	//smooth_backlight(1);
+	fwdgt_counter_reload();
 	_settings.on = 1;
 	startScreen();
 	_error_fl = 0;
@@ -2850,12 +2851,11 @@ void open_window_func()
 		}		
 	}	
 }
-
 void set_watchdog()
 {
 		rcu_osci_on(RCU_IRC40K);
 	  while(ERROR == rcu_osci_stab_wait(RCU_IRC40K));
-	  fwdgt_config(6553, FWDGT_PSC_DIV64);
+	  fwdgt_config(0x0FFF, FWDGT_PSC_DIV128);
     fwdgt_enable();
 }
 
@@ -3464,7 +3464,7 @@ void loop(void)
 			
 			if (currentMenu == NULL && !_error)
 			{
-				
+				#ifdef DEBUG
 				char buffer[10];
 				pxs.setColor(BG_COLOR);
 				pxs.fillRectangle(240, 20, 75, 20);
@@ -3473,7 +3473,7 @@ void loop(void)
 				
 				pxs.setFont(ElectroluxSansRegular20a);
 				DrawTextAligment(265, 20, 30, 20, buffer, false);	
-				#ifdef DEBUG	
+					
 				
 				#endif
 			}

@@ -165,9 +165,40 @@ void receive_uart_int()
 					}			
 					if(frame_cmd == CMD_QUERY)
 					{ 
-						query_settings();				
+						query_settings();		
+						query_datetime();						
 					}
-					
+					if(frame_cmd == CMD_DATETIME)
+					{
+						
+						if(frame[6])
+						{/*
+							datetime_arr[0] = decToBcd(frame[7]);
+							datetime_arr[1] = decToBcd(frame[8]);
+							datetime_arr[2] = decToBcd(frame[9]);
+							datetime_arr[3] = decToBcd(frame[10]);
+							datetime_arr[4] = decToBcd(frame[11]);
+							datetime_arr[5] = decToBcd(frame[12]);
+							datetime_arr[6] = frame[13];
+							*/
+							rtc_deinit();
+							rtc_parameter_struct rtc_from_module;
+							
+							rtc_from_module.rtc_year = decToBcd(frame[7]);
+							rtc_from_module.rtc_month = decToBcd(frame[8]);
+							rtc_from_module.rtc_date = decToBcd(frame[9]);
+							rtc_from_module.rtc_hour = decToBcd(frame[10]);
+							rtc_from_module.rtc_minute = decToBcd(frame[11]);
+							rtc_from_module.rtc_second = 0;//decToBcd(frame[12]);
+							rtc_from_module.rtc_day_of_week = frame[13];
+							
+							rtc_from_module.rtc_factor_asyn = 0x7FU;
+							rtc_from_module.rtc_factor_syn = 0xFFU;
+							rtc_from_module.rtc_display_format = RTC_24HOUR;	
+							
+							rtc_init(&rtc_from_module);
+						}
+					}					
 					if(frame_cmd == CMD_INPUT)
 					{
 						
@@ -598,6 +629,19 @@ void reset_wifi_state()
 		usart_transmit_frame(answer_frame.sptr(), 7);
 }
 
+void query_datetime()
+{
+	answer_frame.clear();
+	answer_frame.reset();
+	answer_frame.put(HEADER_1B);
+	answer_frame.put(HEADER_2B);
+	answer_frame.put(HEADER_VER);
+	answer_frame.put(CMD_DATETIME);
+	answer_frame.put(0x00);
+	answer_frame.put(0x00);	
+	answer_frame.put(chksum8(answer_frame.sptr(), 6));
+	usart_transmit_frame(answer_frame.sptr(), 7);
+}
 
 void query_faults()
 {
