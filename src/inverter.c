@@ -340,9 +340,9 @@ void DrawMenu()
 	switch (currentMenu->items[currentMenu->selected].ID)
 	{
 		case 1:
+			pxs.setColor(MAIN_COLOR);
 			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
 		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
-			pxs.setColor(MAIN_COLOR);
 			pxs.setFont(ElectroluxSansRegular16a);
 			int16_t width = pxs.getTextWidth("MODE");
 			pxs.print(320 / 2 - width / 2-1, 240/2 - 10, "MODE");			
@@ -486,9 +486,6 @@ void DrawMenu()
 		if (pxs.sizeCompressedBitmap(width, height, icon) == 0)
 		{
 			pxs.drawCompressedBitmap(320 / 2 - width / 2, 240 / 2 - height / 2, icon);
-			
-						
-			
 			if(currentMenu->items[currentMenu->selected].ID == 43)
 			{
 				if(!_settings.soundOn)
@@ -1669,6 +1666,18 @@ void SetPower(int8_t value)
 			semistor_power = value*2;
 		}		
 	}
+	if(semistor_power == 20)
+	{
+		LL_GPIO_SetOutputPin(GPIOB, GPIO_PIN_6);
+	}
+	else
+	{
+		if (gpio_input_bit_get(GPIOB, GPIO_PIN_6))
+		{
+			LL_GPIO_ResetOutputPin(GPIOB, GPIO_PIN_6);
+			delay_1ms(100);
+		}
+	}		
 }
 	
 void TIMER_Heat_callback()
@@ -1998,7 +2007,7 @@ void DrawWifi()
 			pxs.setColor(BG_COLOR);
 			if (_settings.workMode == WorkMode_Off)
 			{				
-				pxs.fillRectangle(16, 59, 43, 26);				
+				pxs.fillRectangle(15, 59, 43, 26);				
 			}
 			else
 			{
@@ -2018,7 +2027,7 @@ void DrawWifi()
 		{
 			if (_settings.workMode == WorkMode_Off)
 			{
-				pxs.drawCompressedBitmap(16, 59, (uint8_t*)img_wifi_png_comp);
+				pxs.drawCompressedBitmap(15, 59, (uint8_t*)img_wifi_png_comp);
 			}
 			else
 			{
@@ -2033,9 +2042,9 @@ void DrawWifi()
 		if (_settings.workMode == WorkMode_Off)
 		{
 			pxs.setColor(BG_COLOR);
-			pxs.fillRectangle(16, 59, 43, 26);
+			pxs.fillRectangle(15, 59, 43, 26);
 			if (_blink)
-				pxs.drawCompressedBitmap(16, 59, (uint8_t*)img_wifi_png_comp);
+				pxs.drawCompressedBitmap(15, 59, (uint8_t*)img_wifi_png_comp);
 			pxs.setColor(MAIN_COLOR);
 		}
 		else
@@ -2056,7 +2065,7 @@ void DrawTemperature(int8_t temp, int8_t xo, int8_t yo)
 	sprintf(buffer, "%d", temp);
 	pxs.setFont(ElectroluxSansLight80a);
 	int widthX = pxs.getTextWidth(buffer);
-	int cX = 165 - widthX / 2 + xo;
+	int cX = 160 - widthX / 2 + xo;
 	pxs.print(cX, 60 + yo, buffer);
 	pxs.setFont(ElectroluxSansLight32a);
 	int8_t kerning[] = {-7,-100};
@@ -2071,7 +2080,7 @@ void CleanTemperature(int8_t temp, int8_t xo, int8_t yo)
 	sprintf(buffer, "%d", temp);
 	pxs.setFont(ElectroluxSansLight80a);
 	int widthX = pxs.getTextWidth(buffer);
-	int cX = 165 - widthX / 2 + xo;
+	int cX = 160 - widthX / 2 + xo;
 	pxs.cleanText(cX, 60 + yo, buffer);
 	pxs.setFont(ElectroluxSansLight32a);
 	int8_t kerning[] = {-7,-100};
@@ -2220,15 +2229,15 @@ void DrawMainScreen(uint32_t updater)
 		{
 			case WorkMode_Comfort:
 				DrawTemperature(getModeTemperature(),0,15);
-				pxs.drawCompressedBitmap(12, 15, (uint8_t*)img_icon_comfort_png_comp);
+				pxs.drawCompressedBitmap(15, 15, (uint8_t*)img_icon_comfort_png_comp);
 				break;
 			case WorkMode_Eco:
 				DrawTemperature(getModeTemperature(),0,15);
-				pxs.drawCompressedBitmap(12, 15, (uint8_t*)img_icon_eco_png_comp);
+				pxs.drawCompressedBitmap(15, 15, (uint8_t*)img_icon_eco_png_comp);
 				break;
 			case WorkMode_Antifrost:
 				DrawTemperature(getModeTemperature(),0,15);
-				pxs.drawCompressedBitmap(12, 13, (uint8_t*)img_icon_antifrost_png_comp);
+				pxs.drawCompressedBitmap(15, 13, (uint8_t*)img_icon_antifrost_png_comp);
 				break;
 			case WorkMode_Off:
 				pxs.drawCompressedBitmap(150, 60, (uint8_t*)img_menu_program_off_png_comp);
@@ -2245,7 +2254,7 @@ void DrawMainScreen(uint32_t updater)
 	if ((wifi_status == 4) && (currentMenu == NULL))
 	{
 		if(_settings.workMode == WorkMode_Off)
-			pxs.drawCompressedBitmap(12, 50, (uint8_t*)img_wifi_png_comp);
+			pxs.drawCompressedBitmap(15, 50, (uint8_t*)img_wifi_png_comp);
 		else
 			pxs.drawCompressedBitmap(_xWifi + 6, 128, (uint8_t*)img_wifi_png_comp);	
 	}
@@ -2253,7 +2262,7 @@ void DrawMainScreen(uint32_t updater)
 	{
 		pxs.setColor(BG_COLOR);
 		if(_settings.workMode == WorkMode_Off)
-			pxs.fillRectangle(12, 50, 43, 26);
+			pxs.fillRectangle(15, 50, 43, 26);
 		else
 			pxs.fillRectangle(_xWifi + 6, 128, 83, 26);
 		pxs.setColor(MAIN_COLOR);			
@@ -2261,19 +2270,29 @@ void DrawMainScreen(uint32_t updater)
 
 		
 	if ((_settings.modeOpenWindow) && (_settings.workMode != WorkMode_Off))
-		pxs.drawCompressedBitmap(12, 140, (uint8_t*)img_icon_open_png_comp);
+		pxs.drawCompressedBitmap(15, 140, (uint8_t*)img_icon_open_png_comp);
 		
 	if (_settings.timerOn == 1)
-				pxs.drawCompressedBitmap(12, 77, (uint8_t*)img_icon_timer_png_comp);
+				pxs.drawCompressedBitmap(15, 80, (uint8_t*)img_icon_timer_png_comp);
 	
 	else if (_settings.calendarOn == 1)
 	{
 		if(_settings.workMode == WorkMode_Off)
-			pxs.drawCompressedBitmap(12, 147, (uint8_t*)img_icon_calendar_png_comp);
+			pxs.drawCompressedBitmap(15, 147, (uint8_t*)img_icon_calendar_png_comp);
 		else
-			pxs.drawCompressedBitmap(12, 80, (uint8_t*)img_icon_calendar_png_comp);
+			pxs.drawCompressedBitmap(15, 80, (uint8_t*)img_icon_calendar_png_comp);
 	}
 
+	if(_settings.half_power)
+	{
+		pxs.drawCompressedBitmap(70, 189, (uint8_t*)img_icon_half_png_comp);
+	}
+	else
+	{
+		pxs.setColor(BG_COLOR);
+		pxs.fillRectangle(70, 189, 11, 16);
+	}
+	
 	if (_settings.workMode != WorkMode_Off)
 	{
 		uint8_t powerLevel = 5;
@@ -2312,10 +2331,36 @@ void DrawMainScreen(uint32_t updater)
 			power_level_auto = powerLevel;
 		}
 		
-		for (int i = 0; i < powerLevel; i++)
+		if(_settings.half_power)
 		{
-			pxs.setColor(powerLevelColors[i]); 
-			pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+			for (int i = 0; i < powerLevel; i++)
+			{
+				if(i < 2) 
+				{
+					pxs.setColor(powerLevelColors[0]);
+					pxs.fillRectangle(8, 213, i ? 53 : 26, 12);
+				}
+				else if((i >= 2) && (i < 4)) 
+				{
+					pxs.setColor(powerLevelColors[1]);
+					pxs.fillRectangle(11 + 1 * 53 + 1 * 8, 213, i == 3 ? 53 : 26, 12);
+				}
+				else 
+				{
+					pxs.setColor(powerLevelColors[2]);
+					pxs.fillRectangle(11 + 2 * 53 + 2 * 8, 213, 26, 12);
+				}
+				
+				//pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+			}			
+		}
+		else
+		{
+			for (int i = 0; i < powerLevel; i++)
+			{
+				pxs.setColor(powerLevelColors[i]); 
+				pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+			}
 		}
 
 		pxs.setColor(MAIN_COLOR); 
@@ -2325,12 +2370,12 @@ void DrawMainScreen(uint32_t updater)
 		if (_settings.heatMode == HeatMode_User && _settings.calendarOn == 0)
 		{
 			int8_t kerning[] = {2,2,2,2,2,-100};
-			pxs.print(11, 194, "CUSTOM", kerning);
+			pxs.print(11, 190, "CUSTOM", kerning);
 		}
 		else
 		{
 			int8_t kerning[] = {2,2,2,-100};
-			pxs.print(11, 194, "AUTO", kerning);
+			pxs.print(11, 190, "AUTO", kerning);
 		}
 	}
 	
@@ -2436,7 +2481,7 @@ void ResetAllSettings()
 	_settings.brightness = 1;
 	_settings.soundOn = 1;
 	_settings.displayAutoOff = 0;
-	_settings.half_power = 0;
+	_settings.half_power = 1;
 	_settings.heatMode = HeatMode_Auto;
 	_settings.powerLevel = 1;
 	_settings.workMode = WorkMode_Comfort;
@@ -3405,22 +3450,67 @@ void loop(void)
 					power_level_auto = powerLevel;	
 					query_settings();
 				}	
-				if (currentMenu == NULL && !_error && (!window_is_opened))
-				{
-					for (int i = 0; i <= 5; i++)
-					{
-						if(i < powerLevel)
+					if (currentMenu == NULL && !_error && (!window_is_opened))
+					{						
+						if(_settings.half_power)
 						{
-							pxs.setColor(powerLevelColors[i]); 
-							pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+							for (int i = 0; i < 5; i++)
+							{
+								if(i < powerLevel)
+								{
+									if(i < 2) 
+									{
+										pxs.setColor(powerLevelColors[0]);
+										pxs.fillRectangle(8, 213, i ? 53 : 26, 12);
+									}
+									else if((i >= 2) && (i < 4)) 
+									{
+										pxs.setColor(powerLevelColors[1]);
+										pxs.fillRectangle(11 + 1 * 53 + 1 * 8, 213, i == 3 ? 53 : 26, 12);
+									}
+									else 
+									{
+										pxs.setColor(powerLevelColors[2]);
+										pxs.fillRectangle(11 + 2 * 53 + 2 * 8, 213, 26, 12);
+									}
+								}
+								else
+								{
+									pxs.setColor(BG_COLOR);
+									if(i < 2) 
+									{
+										pxs.fillRectangle(i ? 8+26 : 8, 213, 27, 12);
+
+									}
+									else if((i >= 2) && (i < 4)) 
+									{
+										pxs.fillRectangle(i==3 ? 72+26 : 72, 213, 27, 12);
+
+									}
+									else 
+									{
+										pxs.fillRectangle(11 + 2 * 53 + 2 * 8, 213, 27, 12);
+									}									
+								}
+							}			
 						}
 						else
 						{
-							pxs.setColor(BG_COLOR); 
-							pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
-						}
-					}
-				}					
+							for (int i = 0; i < 5; i++)
+							{
+								if(i < powerLevel)
+								{
+									pxs.setColor(powerLevelColors[i]); 
+									pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+								}
+								else
+								{
+									pxs.setColor(BG_COLOR); 
+									pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+								}
+							}
+						}						
+					}		
 				if(refresh_system)
 				{
 					idleTimeout = GetSystemTick();
@@ -3506,11 +3596,11 @@ void loop(void)
 				{
 					static bool show_icon;
 					if(show_icon)
-					pxs.drawCompressedBitmap(12, 140, (uint8_t*)img_icon_open_png_comp);
+					pxs.drawCompressedBitmap(15, 140, (uint8_t*)img_icon_open_png_comp);
 				  else
 				  {
 					  pxs.setColor(BG_COLOR);
-					  pxs.fillRectangle(12, 140, 50, 48);
+					  pxs.fillRectangle(15, 140, 50, 48);
 					  pxs.setColor(MAIN_COLOR);
 				  }
 					show_icon = !show_icon;
