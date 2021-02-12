@@ -32,7 +32,7 @@ extern "C" {
 #define MIN_TEMP_COMFORT 		10
 #define MAX_TEMP_COMFORT 		35
 
-#define BG_COLOR	RGB(0x0, 0x0, 0x0)
+#define BG_COLOR		RGB(0x0, 0x0, 0x0)
 #define MAIN_COLOR	RGB(0xFF, 0xFF, 0xFF)
 #define GREEN_COLOR	RGB(0x13, 0xA5, 0x38)
 
@@ -139,8 +139,6 @@ struct DeviceSettings
 	uint8_t modeOpenWindow;
 	uint8_t calendar[7];
 	struct Presets custom;
-	Presets week_schedule[7];
-
 	uint8_t timerOn;
 	uint16_t timerTime;
 	char UDID[16];
@@ -179,7 +177,6 @@ void DrawWifi();
 void DrawWindowOpen();
 void open_window_func();
 WorkMode getCalendarMode();
-uint8_t getCalendartemp();
 uint8_t xw09A_read_data(uint8_t button_num);
 void SysTick_Handler_Callback();
 void smooth_backlight(uint8_t mode);

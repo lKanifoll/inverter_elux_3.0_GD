@@ -80,14 +80,9 @@ static MenuItem_t _displayMenu[] = {
 	{422, 0, NULL, 					On, Off, NULL }, // Time
 };
 
-// Connect menu
-static MenuItem_t _connMenu[] = {
-	{4431, 0, NULL, 					NULL, NULL, NULL }, // connect
-	//{4432, 0, NULL, 					On, Off, NULL },        // Reset
-};	
+
 // Service menu
 static MenuItem_t _serviceMenu[] = {
-	{443, 1, _connMenu, 		NULL, NULL, NULL }, // Wifi
 	{441, 0, NULL, 					On, Off, NULL }, // Reset
 	{442, 0, NULL, 					NULL, NULL, MenuBack }, // Info
 	
@@ -98,24 +93,24 @@ static MenuItem_t _settingsMenu[] = {
 	{41, 2, _datetimeMenu, 	NULL, NULL, NULL }, // Date&time
 	{42, 2, _displayMenu, 	NULL, NULL, NULL }, // Display
 	{43, 0, NULL, 					On, Off, NULL }, 		// Sound
-	{44, 3, _serviceMenu, 	NULL, NULL, NULL }, // Service
+	{44, 2, _serviceMenu, 	NULL, NULL, NULL }, // Service
 	
 };
 
 static MenuItem_t _presetMenu = 
-	{510, 24, NULL, CustomPrev, CustomNext, NULL };
+	{510, 8, NULL, 					NULL, NULL, NULL };
 
 static MenuItem_t _presetViewMenu = 
 	{511, 0, NULL, 					NULL, NULL, NULL };
 
 static MenuItem_t _selectModeMenu = 
-	{530, 0, NULL, 					TempMinus, TempPlus, NULL };
+	{530, 4, NULL, 					NULL, NULL, NULL };
 
 // Program menu
 static MenuItem_t _programMenu[] = {
 	{51, 7, NULL, 					NULL, NULL, NULL }, // Setup
 	{52, 0, NULL, 					On, Off, NULL }, // Calendar
-	//{53, 24, NULL, CustomPrev, CustomNext, NULL }, // Custom day
+	{53, 24, NULL, CustomPrev, CustomNext, NULL }, // Custom day
 };
 
 // Main menu
@@ -124,7 +119,7 @@ static MenuItem_t _mainMenu[] = {
 	{2, 2, _powerMenu, 			NULL, NULL, NULL }, // Power
 	{3, 2, _timerMenu, 			NULL, NULL, NULL }, // Timer
 	{4, 4, _settingsMenu,		NULL, NULL, NULL }, // Settings
-	{5, 2, _programMenu, 		NULL, NULL, NULL }, // Program
+	{5, 3, _programMenu, 		NULL, NULL, NULL }, // Program
 };
 
 static MenuItem_t _menu = 
@@ -446,22 +441,6 @@ void DrawMenu()
 			icon = img_menu_setting_info_png_comp ;
 			text = "Information";
 			break;
-/*		case 443:
-			icon = img_menu_conn_png_comp;
-			text = "Connection";
-			break;
-		case 4431:
-			drawRoundRect(133,84,133,84,12,6);
-			pxs.setColor(MAIN_COLOR);
-			pxs.setFont(FuturaBookC20a);
-			width = pxs.getTextWidth("START");
-			pxs.print(320 / 2 - width / 2-1, 240/2 - 10, "START");		
-			text = "Connecting";
-			break;	
-		case 4432:
-			icon = img_menu_setting_reset_png_comp;
-			text = "Reset connection";
-			break;		*/
 		case 411:
 			icon = img_menu_program_icon_png_comp;
 			text = "Set date";
@@ -492,10 +471,8 @@ void DrawMenu()
 				{
 					pxs.setColor(MAIN_COLOR);
 					pxs.drawOval(320/2 - 86/2,240/2 - 86/2,86,86);
-					
 					pxs.drawLine(320/2 - 30, 240/2 + 30, 320/2 + 31, 240/2 - 31);
 					pxs.drawLine(320/2 - 30, 240/2 + 31, 320/2 + 31, 240/2 - 30);
-
 				}
 			}
 		}
@@ -546,10 +523,10 @@ void DrawCustomDay(int _old = -1)
 			int cY = iy * 40 + 60;
 
 			char buf[4];
-			sprintf(buf, "%d",i);
+			sprintf(buf, "%d", i);
 			if (_pr->hour[i] > 3) _pr->hour[i] = pEco;
 			if (i == _old || currentMenu->selected == i || _old == -1)
-				DrawTextAligment(cX, cY, 42, 32, buf, false, false, (currentMenu->selected == i) ? 2 : 0 , MAIN_COLOR, modeColors[(_settings.week_schedule[_presetSet.week].hour[i]<11 ? 2 : 0)]);		
+				DrawTextAligment(cX, cY, 42, 32, buf, false, false, (currentMenu->selected == i) ? 2 : ((_pr->hour[i] == 3) ? 2 : 0) , MAIN_COLOR, modeColors[_pr->hour[i]]);		
 		}
 	}
 }
@@ -827,24 +804,18 @@ void DrawEditParameter()
 		case 52:
 			DrawMenuTitle("Programme");
 			pxs.setFont(ElectroluxSansRegular36a);
-			//DrawTextAligment(20, 100, 100, 100,"ON", _onoffSet.parameter,0,0,  _onoffSet.parameter ? GREEN_COLOR : MAIN_COLOR, _onoffSet.parameter ? MAIN_COLOR : BG_COLOR );
-			//DrawTextAligment(200, 100, 100, 100,"OFF", !_onoffSet.parameter,0,0, _onoffSet.parameter ? MAIN_COLOR : GREEN_COLOR, _onoffSet.parameter ? BG_COLOR : MAIN_COLOR );		
 			DrawTextAligment( 20, 100, 100, 100, "ON",  _onoffSet.parameter,0,0,  MAIN_COLOR, BG_COLOR );
 			DrawTextAligment(200, 100, 100, 100,"OFF", !_onoffSet.parameter,0,0,  MAIN_COLOR, BG_COLOR );				
 			break;
 		case 31:
 		case 43:
 		case 422:
-			pxs.setFont(ElectroluxSansRegular36a);
-			//DrawTextAligment( 20, 70, 100, 100,  "ON", _onoffSet.parameter,_onoffSet.current,0,  _onoffSet.parameter ? GREEN_COLOR : MAIN_COLOR, _onoffSet.parameter ? MAIN_COLOR : BG_COLOR );
-			//DrawTextAligment(200, 70, 100, 100, "OFF", !_onoffSet.parameter,!_onoffSet.current,0, _onoffSet.parameter ? MAIN_COLOR : GREEN_COLOR, _onoffSet.parameter ? BG_COLOR : MAIN_COLOR );		
+			pxs.setFont(ElectroluxSansRegular36a);	
 			DrawTextAligment( 20, 70, 100, 100,  "ON",  _onoffSet.parameter, _onoffSet.current,0, MAIN_COLOR, BG_COLOR );
 			DrawTextAligment(200, 70, 100, 100, "OFF", !_onoffSet.parameter,!_onoffSet.current,0, MAIN_COLOR, BG_COLOR );				
 			break;
 		case 421:
 			pxs.setFont(ElectroluxSansRegular36a);
-			//DrawTextAligment(20, 60, 120, 120,"50%", _onoffSet.parameter,0,0,  _onoffSet.parameter ? GREEN_COLOR : MAIN_COLOR, _onoffSet.parameter ? MAIN_COLOR : BG_COLOR );
-			//DrawTextAligment(180, 60, 120, 120,"100%", !_onoffSet.parameter,0,0, _onoffSet.parameter ? MAIN_COLOR : GREEN_COLOR, _onoffSet.parameter ? BG_COLOR : MAIN_COLOR );
 			DrawTextAligment( 20, 60, 120, 120, "50%",  _onoffSet.parameter,0,0, MAIN_COLOR, BG_COLOR );
 			DrawTextAligment(180, 60, 120, 120,"100%", !_onoffSet.parameter,0,0, MAIN_COLOR, BG_COLOR );
 			break;
@@ -870,13 +841,8 @@ void DrawEditParameter()
 			}
 			
 			pxs.setFont(ElectroluxSansRegular24a);
-			//DrawTextAligment(20, 115, 90, 90,"Yes", _onoffSet.parameter,0,0,  _onoffSet.parameter ? GREEN_COLOR : MAIN_COLOR, _onoffSet.parameter ? MAIN_COLOR : BG_COLOR );
-			//DrawTextAligment(210, 115, 90, 90,"No", !_onoffSet.parameter,0,0, _onoffSet.parameter ? MAIN_COLOR : GREEN_COLOR, _onoffSet.parameter ? BG_COLOR : MAIN_COLOR );	
-			DrawTextAligment( 20, 115, 90, 90,"Yes",  _onoffSet.parameter,0,0, MAIN_COLOR, BG_COLOR );
-			DrawTextAligment(210, 115, 90, 90, "No", !_onoffSet.parameter,0,0, MAIN_COLOR, BG_COLOR );			
-			
-			//DrawTextAligment(20, 115, 90, 90,"Yes", !_onoffSet.parameter,0,0,  _onoffSet.parameter ? MAIN_COLOR : GREEN_COLOR, _onoffSet.parameter ? BG_COLOR : MAIN_COLOR );
-			//DrawTextAligment(210, 115, 90, 90,"No", _onoffSet.parameter,0,0, _onoffSet.parameter ? GREEN_COLOR : MAIN_COLOR, _onoffSet.parameter ? MAIN_COLOR : BG_COLOR );				
+			DrawTextSelected(80, 240 - pxs.getTextLineHeight() - 45, "Yes", _onoffSet.parameter, false, 5, 15);
+			DrawTextSelected(210, 240 - pxs.getTextLineHeight() - 45, "No", !_onoffSet.parameter, false, 5, 15);			
 			break;
 		case 442: // info
 			pxs.setFont(ElectroluxSansRegular24a);
@@ -887,12 +853,7 @@ void DrawEditParameter()
 		
 			width = pxs.getTextWidth(buffer);
 			DrawTextAligment(0, 115, 320, 60, buffer, false);		
-			break;
-		case 4431: // wifi
-			//pxs.setFont(ElectroluxSansRegular24a);
-			pxs.print(60, 90, "Connecting");
-			reset_wifi_state();
-			break;		
+			break;	
 		case 51:
 		  rtc_current_time_get(&rtc_initpara);
 			for (int i = 0; i < 7; i++)
@@ -900,15 +861,12 @@ void DrawEditParameter()
 				if (_settings.calendar[i] > 7) _settings.calendar[i] = 0;
 				pxs.setColor(MAIN_COLOR);
 				pxs.setFont(ElectroluxSansRegular20a);
-				//DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y, 50, 30, (char*)_calendarInfo[i].week, false, false, 0);
-				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y + 30, 65, 65,(char*)_calendarInfo[i].week/* (char*)_calendarPresetName[_settings.calendar[i]]*/, (currentMenu->selected == i), i == (rtc_initpara.rtc_day_of_week -1) ? 1 : 0 , 2, 
+				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y, 50, 30, (char*)_calendarInfo[i].week, false, false, 0);
+				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y + 30, 50, 50, (char*)_calendarPresetName[_settings.calendar[i]], (currentMenu->selected == i), i == (rtc_initpara.rtc_day_of_week -1) ? 1 : 0 , 2, 
 					                 MAIN_COLOR, BG_COLOR );
 			}
 			break;
 		case 510:
-			//DrawMenuTitle("CUSTOM 24h", -3);
-			DrawCustomDay();			
-			
 			switch (_presetSet.week)
 			{
 				case 0: DrawMenuTitle("Monday"); 		break;
@@ -919,19 +877,18 @@ void DrawEditParameter()
 				case 5: DrawMenuTitle("Saturday"); 	break;
 				case 6: DrawMenuTitle("Sunday"); 		break;
 			}
-			/*
+			
 			pxs.setFont(ElectroluxSansRegular20a);
 			for (int iy = 0; iy < 2; iy++)
 			{
 				for (int ix = 0; ix < 4; ix++)
 				{
 					int i = iy * 4 + ix;
-					int16_t cX = ix * 75 + 22;
-					int16_t cY = iy * 75 + 80;
-					DrawTextAligment(cX, cY, 50, 50, (char*)_calendarPresetName[i], (currentMenu->selected == i), (_settings.calendar[_presetSet.week] == i), 2, 
-													 MAIN_COLOR,  BG_COLOR);
+					int16_t cX = ix * 80 + 15;
+					int16_t cY = iy * 80 + 70;
+					DrawTextAligment(cX, cY, 50, 50, (char*)_calendarPresetName[i], (currentMenu->selected == i), (_settings.calendar[_presetSet.week] == i), 2);
 				}
-			}*/
+			}
 			break;
 		case 511:
 			switch (_presetSet.preset)
@@ -971,8 +928,7 @@ void DrawEditParameter()
 			break;
 		case 530: // custom day select mode
 			DrawLeftRight();
-			DrawTemperature(_tempConfig.desired, -25, 15);
-		/*
+		
 			switch (currentMenu->selected)
 			{
 				case pComfort:
@@ -991,7 +947,7 @@ void DrawEditParameter()
 					if (pxs.sizeCompressedBitmap(width, height, img_menu_program_off_png_comp) == 0) pxs.drawCompressedBitmap(320 / 2 - width / 2, 240 / 2 - height / 2, img_menu_program_off_png_comp);
 					DrawMenuText("Off");
 					break;
-			}*/
+			}
 			break;
 		default:
 			DrawMenuText("Not implemented");
@@ -1284,14 +1240,12 @@ void AcceptParameter()
 			}
 			break;
 		case 51: // presets
-			
 			_presetSet.week = currentMenu->selected;
-			//_presetSet.preset = _settings.calendar[_presetSet.week];
+			_presetSet.preset = _settings.calendar[_presetSet.week];
 			_presetMenu.parent = currentMenu;
 			currentMenu = &_presetMenu;
-			currentMenu->selected = 0;		
+			currentMenu->selected = 0;
 			break;
-		
 		case 52: // calendar
 			_settings.calendarOn = _onoffSet.parameter;		
 		  if(_settings.calendarOn)
@@ -1308,31 +1262,20 @@ void AcceptParameter()
 			GoOK();	
 			break;
 		case 53: // custom day
-			/*
 			uint8_t select = currentMenu->selected;
 			_selectModeMenu.parent = currentMenu;
 			currentMenu = &_selectModeMenu;
-			currentMenu->selected = select;//_settings.custom.hour[select];
-		
-			_tempConfig.desired = _settings.week_schedule[0].hour[select];
-			_tempConfig.min = 0;
-			_tempConfig.max = 40;*/
+			currentMenu->selected = _settings.custom.hour[select];
 			break;
 		case 530: // custom day
-			_settings.week_schedule[_presetSet.week].hour[currentMenu->selected] = _tempConfig.desired;
-
+			_settings.custom.hour[currentMenu->parent->selected] = currentMenu->selected;
 			GoOK();
 			break;
-
 		case 510: // presets
-			uint8_t select = currentMenu->selected;
-			_selectModeMenu.parent = currentMenu;
-			currentMenu = &_selectModeMenu;
-			currentMenu->selected = select;//_settings.custom.hour[select];
-		
-			_tempConfig.desired = _settings.week_schedule[_presetSet.week].hour[select];
-			_tempConfig.min = 0;
-			_tempConfig.max = 40;	
+			_presetSet.preset = currentMenu->selected;
+			_presetViewMenu.parent = currentMenu;
+			currentMenu = &_presetViewMenu;
+			currentMenu->selected = 0;
 			break;
 		case 511: // presets
 			_settings.calendar[_presetSet.week] = _presetSet.preset;
@@ -1379,16 +1322,7 @@ void AcceptParameter()
 				SaveFlash();
 				NVIC_SystemReset();
 			}
-			break;
-			
-		case 4431: // wifi
-			//reset_wifi_state();
-			GoOK();
-			break;		
-		case 4432: // wifi
-		//reset_wifi_state();
-		GoOK();
-		break;	
+			break;	
 	}
 }
 
@@ -1643,7 +1577,6 @@ void SetPower(int8_t value)
 		{
 			LL_GPIO_ResetOutputPin(GPIOB, GPIO_PIN_5);
 			delay_1ms(100);
-			
 		}
 		semistor_power = value;
 	}
@@ -2223,38 +2156,33 @@ void DrawMainScreen(uint32_t updater)
 
 
 	pxs.setColor(MAIN_COLOR);
-  if(_settings.calendarOn == 0)
+
+	switch (_settings.workMode)
 	{
-		switch (_settings.workMode)
-		{
-			case WorkMode_Comfort:
-				DrawTemperature(getModeTemperature(),0,15);
-				pxs.drawCompressedBitmap(15, 15, (uint8_t*)img_icon_comfort_png_comp);
-				break;
-			case WorkMode_Eco:
-				DrawTemperature(getModeTemperature(),0,15);
-				pxs.drawCompressedBitmap(15, 15, (uint8_t*)img_icon_eco_png_comp);
-				break;
-			case WorkMode_Antifrost:
-				DrawTemperature(getModeTemperature(),0,15);
-				pxs.drawCompressedBitmap(15, 13, (uint8_t*)img_icon_antifrost_png_comp);
-				break;
-			case WorkMode_Off:
-				pxs.drawCompressedBitmap(150, 60, (uint8_t*)img_menu_program_off_png_comp);
-				pxs.setFont(ElectroluxSansRegular24a);
-				DrawTextAligment(145, 160, 82, 45, "Off", false, false);
-				break;
-		}
+		case WorkMode_Comfort:
+			DrawTemperature(getModeTemperature(),0,15);
+			pxs.drawCompressedBitmap(15, 15, (uint8_t*)img_icon_comfort_png_comp);
+			break;
+		case WorkMode_Eco:
+			DrawTemperature(getModeTemperature(),0,15);
+			pxs.drawCompressedBitmap(15, 15, (uint8_t*)img_icon_eco_png_comp);
+			break;
+		case WorkMode_Antifrost:
+			DrawTemperature(getModeTemperature(),0,15);
+			pxs.drawCompressedBitmap(15, 13, (uint8_t*)img_icon_antifrost_png_comp);
+			break;
+		case WorkMode_Off:
+			pxs.drawCompressedBitmap(150, 60, (uint8_t*)img_menu_program_off_png_comp);
+			pxs.setFont(ElectroluxSansRegular24a);
+			DrawTextAligment(145, 160, 82, 45, "Off", false, false);
+			break;
 	}
-	else
-	{
-		DrawTemperature(getCalendartemp(),0,15);
-	}
+
 
 	if ((wifi_status == 4) && (currentMenu == NULL))
 	{
 		if(_settings.workMode == WorkMode_Off)
-			pxs.drawCompressedBitmap(15, 50, (uint8_t*)img_wifi_png_comp);
+			pxs.drawCompressedBitmap(15, 59, (uint8_t*)img_wifi_png_comp);
 		else
 			pxs.drawCompressedBitmap(_xWifi + 6, 128, (uint8_t*)img_wifi_png_comp);	
 	}
@@ -2358,7 +2286,7 @@ void DrawMainScreen(uint32_t updater)
 		{
 			for (int i = 0; i < powerLevel; i++)
 			{
-				pxs.setColor(powerLevelColors[i]); 
+				pxs.setColor(powerLevelColors[i]);
 				pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
 			}
 		}
@@ -2406,15 +2334,6 @@ WorkMode getCalendarMode()
 	struct Presets* _pr = (_settings.calendar[rtc_initpara.rtc_day_of_week - 1] < 7) ? (struct Presets*)&_presets[_settings.calendar[rtc_initpara.rtc_day_of_week - 1]] : &_settings.custom;
 	return (WorkMode)_pr->hour[bcdToDec(rtc_initpara.rtc_hour)];
 }
-
-uint8_t getCalendartemp()
-{
-	rtc_current_time_get(&rtc_initpara); 
-	struct Presets* _pr = (struct Presets*)&_settings.week_schedule[rtc_initpara.rtc_day_of_week - 1];
-	return _pr->hour[bcdToDec(rtc_initpara.rtc_hour)];
-}
-
-
 void InitTimer()
 {
 	if (_settings.on == 0 || (_settings.timerOn == 0 && _settings.calendarOn == 0))
@@ -2472,20 +2391,20 @@ void InitTimer()
 
 void ResetAllSettings()
 {
-	_settings.on = 1;
-	_settings.blocked = 0;
-	_settings.tempComfort = 24;
-	_settings.tempEco = 4;
-	_settings.tempAntifrost = 5;
-	_settings.calendarOn = 0;
-	_settings.brightness = 1;
-	_settings.soundOn = 1;
-	_settings.displayAutoOff = 0;
-	_settings.half_power = 1;
-	_settings.heatMode = HeatMode_Auto;
-	_settings.powerLevel = 1;
-	_settings.workMode = WorkMode_Comfort;
-	_settings.modeOpenWindow = 0;
+	_settings.on 									= 1;
+	_settings.blocked 						= 0;
+	_settings.tempComfort 				= 24;
+	_settings.tempEco 						= 4;
+	_settings.tempAntifrost 			= 5;
+	_settings.calendarOn 					= 0;
+	_settings.brightness 					= 1;
+	_settings.soundOn 						= 1;
+	_settings.displayAutoOff 			= 0;
+	_settings.half_power 					= 0;
+	_settings.heatMode 						= HeatMode_Auto;
+	_settings.powerLevel 					= 1;
+	_settings.workMode 						= WorkMode_Comfort;
+	_settings.modeOpenWindow 			= 0;
 	
 	_settings.calendar[0] = 3;
 	_settings.calendar[1] = 3;
@@ -2495,43 +2414,27 @@ void ResetAllSettings()
 	_settings.calendar[5] = 3;
 	_settings.calendar[6] = 3;
 	
-		memset(&_settings.week_schedule, 5, sizeof(_settings.week_schedule));
-	_settings.week_schedule[0].hour[3] = 30;
-	_settings.week_schedule[0].hour[4] = 10;
-	/*
-	 _settings.week_schedule[7] = {
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
-	{ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }
-  };
-	*/
-	
 	memset(&_settings.custom, pEco, sizeof(_settings.custom));
 	_settings.timerOn = 0;
 	_settings.timerTime = 12 * 60; // 12:00
 	memset(&_settings.UDID, 0, sizeof(_settings.UDID));
 	
 	rtc_deinit();
-	rtc_initpara.rtc_factor_asyn = 0x7F;
-	rtc_initpara.rtc_factor_syn = 0xFF;
-	rtc_initpara.rtc_year = 0x20;
-	rtc_initpara.rtc_day_of_week = RTC_WEDSDAY;
-	rtc_initpara.rtc_month = RTC_JAN;
-	rtc_initpara.rtc_date = 0x01;
+	rtc_initpara.rtc_factor_asyn 		= 0x7F;
+	rtc_initpara.rtc_factor_syn 		= 0xFF;
+	rtc_initpara.rtc_year 					= 0x20;
+	rtc_initpara.rtc_day_of_week 		= RTC_WEDSDAY;
+	rtc_initpara.rtc_month 					= RTC_JAN;
+	rtc_initpara.rtc_date 					= 0x01;
 	rtc_initpara.rtc_display_format = RTC_24HOUR;
-	rtc_initpara.rtc_am_pm = 0;
+	rtc_initpara.rtc_am_pm 					= 0;
 
-	rtc_initpara.rtc_hour = 0x12;
-		 
+	rtc_initpara.rtc_hour   = 0x12;
 	rtc_initpara.rtc_minute = 0x00;
-
 	rtc_initpara.rtc_second = 0x00;
 
-	if(ERROR == rtc_init(&rtc_initpara)){    
+	if(ERROR == rtc_init(&rtc_initpara))
+	{    
 		while(1);
 	}
 }
@@ -2940,7 +2843,6 @@ void loop(void)
 	}
 	
 	InitTimer();
-	//alarm_set(0);
 	
 	
 	
@@ -3258,23 +3160,7 @@ void loop(void)
 		{	
 
 			temp_current = getTemperature();
-			int8_t modeTemp;
-			if(_settings.calendarOn)
-			{
-				modeTemp = getCalendartemp();
-				
-				if (modeTemp != currentWorkMode)
-				{
-					CleanTemperature(currentWorkMode,0,15);
-					currentWorkMode = modeTemp;
-					DrawMainScreen(1);
-				}
-			}
-			else
-			{
-				modeTemp = getModeTemperature();
-			}
-			
+			int8_t modeTemp = getModeTemperature();
 			power_current = _currentPower;
 		
 			if (temp_current  == -127)
@@ -3527,49 +3413,23 @@ void loop(void)
 		if (GetSystemTick() > refrash_time && _settings.on)
 		{	
 			fwdgt_counter_reload();
-			
-			if(currentMenu->ID == 4431)
-			{
-				static uint8_t connstep = 1;
-				pxs.setFont(ElectroluxSansRegular24a);
-				switch (connstep) {				
-					case 1:
-					  pxs.print(235, 90, ".");
-						break;
-					case 2:
-						pxs.cleanText(235, 90, ".");
-					  pxs.print(235, 90, "..");
-						break;
-					case 3:
-						pxs.cleanText(235, 90, "..");
-					  pxs.print(235, 90, "...");
-						break;
-					case 4:
-					  pxs.cleanText(235, 90, "...");
-						break;						
-					
-				}
-				if(++connstep == 5) connstep = 1;
-			}
-			
+						
 			if (currentMenu == NULL && !_error)
 			{
-				#ifdef DEBUG
+				
 				char buffer[10];
 				pxs.setColor(BG_COLOR);
 				pxs.fillRectangle(240, 20, 75, 20);
 				pxs.setColor(MAIN_COLOR);		
-				sprintf(buffer, "%d %d", getTemperature(), _currentPower);
-				
+				sprintf(buffer, "%d %d", getTemperature(), _currentPower);			
 				pxs.setFont(ElectroluxSansRegular20a);
 				DrawTextAligment(265, 20, 30, 20, buffer, false);	
-					
-				
+
+				#ifdef DEBUG
 				#endif
 			}
 			
 //============================================================ Calendar & Timer		
-	
 			if (_eventTimer) // timer event
 			{
 				if (_settings.timerOn == 1)
@@ -3579,13 +3439,12 @@ void loop(void)
 				}
 				else if (_settings.calendarOn == 1)
 				{
-					//uint8_t currentWorktemp = getCalendartemp();
-					//if (modeTemp != currentWorkMode)
+					WorkMode currentWorkMode = getCalendarMode();
+					if (_settings.workMode != currentWorkMode)
 					{
-						//_settings.workMode = currentWorkMode;
-						//nextChangeLevel = GetSystemTick() + 1000;
-			
-					//	DrawMainScreen();
+						_settings.workMode = currentWorkMode;
+						nextChangeLevel = GetSystemTick() + 1000;
+						DrawMainScreen();
 					}
 				}
 				_eventTimer = 0;

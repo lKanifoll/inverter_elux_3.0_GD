@@ -78,31 +78,27 @@ void receive_uart_int()
 		// PARSER
 		uint8_t  pointer     = 0;
 		uint16_t payload_len = 0;
-		uint8_t  frame_cmd   = 0;
-		uint8_t  device_cmd  = 0;
+		uint8_t  frame_dir   = 0;
+		uint16_t  device_cmd  = 0;
 		while(pointer != rxcount/*recv_counter*/)
 		{
 			if(recv_buffer[pointer] == HEADER_1B && recv_buffer[pointer+1] == HEADER_2B) // FIND HEADER 55AA
 			{
-				//pointer += HEADER_LEN;
-				//pointer++;
-				frame_cmd = recv_buffer[pointer+3];
-				if(frame_cmd  == CMD_INPUT)
-				{
-					device_cmd = recv_buffer[pointer+6];
-				}
-				payload_len = ((recv_buffer[pointer+4] << 8) | recv_buffer[pointer+5])  ;
+
+				frame_dir   =   recv_buffer[pointer + 9];
+				device_cmd  = ( recv_buffer[pointer + 7]  << 8) + recv_buffer[pointer + 8];
+				payload_len = ((recv_buffer[pointer + 10] << 8) | recv_buffer[pointer + 11])  ;
 				
-				uint8_t *frame = new uint8_t[payload_len + 7];
+				uint8_t *frame = new uint8_t[payload_len + 16];
 				
-				for(uint8_t ii = 0; ii < (payload_len + 7); ii++)
+				for(uint8_t ii = 0; ii < (payload_len + 16); ii++)
 				{
 					frame[ii] = recv_buffer[pointer + ii];								
 				}
 				
-				crc = chksum8(frame, payload_len + 6);
+				crc = chksum8(frame, payload_len + 15);
 				
-				if(crc == frame[payload_len + 6])
+				if(crc == frame[payload_len + 15])
 				{
 					answer_frame.clear();
 					answer_frame.reset();
@@ -110,8 +106,8 @@ void receive_uart_int()
 					answer_frame.put(HEADER_2B);
 					answer_frame.put(HEADER_VER);
 					
-					
-					if(frame_cmd == CMD_HB)
+/*					
+					if(frame_dir == CMD_HB)
 					{
 						answer_frame.put(CMD_HB);
 						answer_frame.put(0x00);
@@ -122,7 +118,7 @@ void receive_uart_int()
 						//query_settings();
 
 					}
-					if(frame_cmd == CMD_INFO)
+					if(frame_dir == CMD_INFO)
 					{
 						answer_frame.put(CMD_INFO);
 						answer_frame.put(0x00);
@@ -131,7 +127,7 @@ void receive_uart_int()
 						answer_frame.put(chksum8(answer_frame.sptr(), 0x2A+6));
 						usart_transmit_frame(answer_frame.sptr(), 0x2A+7);		
 					}
-					if(frame_cmd == CMD_WMODE)
+					if(frame_dir == CMD_WMODE)
 					{
 						answer_frame.put(CMD_WMODE);
 						answer_frame.put(0x00);
@@ -139,14 +135,14 @@ void receive_uart_int()
 						answer_frame.put(chksum8(answer_frame.sptr(), 6));
 						usart_transmit_frame(answer_frame.sptr(), 7);
 					}			
-					if(frame_cmd == CMD_WF_STAT)
+					if(frame_dir == CMD_WF_STAT)
 					{
 						wifi_status = frame[6];
 						answer_frame.put(CMD_WF_STAT);
 						answer_frame.put(0x00);
 						answer_frame.put(0x00);
 						answer_frame.put(chksum8(answer_frame.sptr(), 6));
-						usart_transmit_frame(answer_frame.sptr(), 7);
+						usart_transmit_frame(answer_frame.sptr(), 7);*/
 /*
 						answer_cmd[3] = CMD_NET_CONF;
 						answer_cmd[4] = 0x00;
@@ -161,26 +157,18 @@ void receive_uart_int()
 						//memmove(answer_cmd+6, prod_info, 0x2A);
 						//answer_cmd[6] = 0x00;
 						answer_cmd[6] = chksum8(answer_cmd, 6);
-						usart_transmit_frame(answer_cmd, 7);	*/			
-					}			
-					if(frame_cmd == CMD_QUERY)
+						usart_transmit_frame(answer_cmd, 7);				
+					}			*/
+				/*	if(frame_dir == CMD_QUERY)
 					{ 
 						query_settings();		
 						query_datetime();						
 					}
-					if(frame_cmd == CMD_DATETIME)
+					if(frame_dir == CMD_DATETIME)
 					{
 						
 						if(frame[6])
-						{/*
-							datetime_arr[0] = decToBcd(frame[7]);
-							datetime_arr[1] = decToBcd(frame[8]);
-							datetime_arr[2] = decToBcd(frame[9]);
-							datetime_arr[3] = decToBcd(frame[10]);
-							datetime_arr[4] = decToBcd(frame[11]);
-							datetime_arr[5] = decToBcd(frame[12]);
-							datetime_arr[6] = frame[13];
-							*/
+						{
 							rtc_deinit();
 							rtc_parameter_struct rtc_from_module;
 							
@@ -198,8 +186,8 @@ void receive_uart_int()
 							
 							rtc_init(&rtc_from_module);
 						}
-					}					
-					if(frame_cmd == CMD_INPUT)
+					}			*/		
+					if(frame_dir == CMD_INPUT)
 					{
 						
 						if(device_cmd == ID_SWITCH)
@@ -573,21 +561,38 @@ void receive_uart_int()
 							_settings.powerLevel = frame[13];
 							refresh_system = true;
 						}	
-						if(device_cmd == ID_SCHEDULE)
+						
+						if(device_cmd == ID_PRESETS)
 						{
 							answer_frame.put(CMD_OUTPUT);
 							answer_frame.put(frame[4]);
 							answer_frame.put(frame[5]);
-							answer_frame.put(ID_SCHEDULE);
+							answer_frame.put(ID_PRESETS);
 							answer_frame.put(0);
 							answer_frame.put(0);
-							answer_frame.put(0xA8);
-							answer_frame.put_str(&frame[10],168);
+							answer_frame.put(0x07);
+							answer_frame.put_str(&frame[10],7);
 							answer_frame.put(chksum8(answer_frame.sptr(), payload_len+6));
 							usart_transmit_frame(answer_frame.sptr(), payload_len+7);	
-							memcpy(&_settings.week_schedule, frame+10, 168);
+							memcpy(&_settings.calendar, frame+10, 7);
 							refresh_system = true;
 						}	
+						if(device_cmd == ID_CUSTOM_H)
+						{
+							answer_frame.put(CMD_OUTPUT);
+							answer_frame.put(frame[4]);
+							answer_frame.put(frame[5]);
+							answer_frame.put(ID_CUSTOM_H);
+							answer_frame.put(0);
+							answer_frame.put(0);
+							answer_frame.put(0x18);
+							answer_frame.put_str(&frame[10],24);
+							answer_frame.put(chksum8(answer_frame.sptr(), payload_len+6));
+							usart_transmit_frame(answer_frame.sptr(), payload_len+7);	
+							memcpy(&_settings.calendar, frame+10, 24);
+							refresh_system = true;
+						}							
+						
 						refresh_mainscreen();
 					}
 				}
@@ -685,8 +690,8 @@ void query_settings()
 	answer_frame.put(HEADER_2B);
 	answer_frame.put(HEADER_VER);
 	answer_frame.put(CMD_OUTPUT);
-	answer_frame.put(0x01);
-	answer_frame.put(0x23);
+	answer_frame.put(0x00);
+	answer_frame.put(0x77);
 	//switch
 	answer_frame.put(ID_SWITCH);
 	answer_frame.put(1);
@@ -744,16 +749,16 @@ void query_settings()
 	answer_frame.put(0);
 	answer_frame.put(1);
 	answer_frame.put((_error == 1 ? 0x01 : 0x00) |
-	                 (_error == 2 ? 0x04 : 0x00) |
-	                 (_error == 3 ? 0x05 : 0x00) |
+	                 (_error == 2 ? 0x02 : 0x00) |
+	                 (_error == 3 ? 0x04 : 0x00) |
 	                 (_error == 4 ? 0x08 : 0x00) );
 									 	
 	//Schedule
-	answer_frame.put(ID_SCHEDULE);
+	answer_frame.put(ID_PRESETS);
 	answer_frame.put(0);
 	answer_frame.put(0);
-	answer_frame.put(0xA8);
-	answer_frame.put_str((uint8_t*)_settings.week_schedule,168);
+	answer_frame.put(0x07);
+	answer_frame.put_str((uint8_t*)_settings.calendar,7);
 	//Comfort temperature
 	answer_frame.put(ID_COMFORT);
 	answer_frame.put(2);
@@ -837,6 +842,6 @@ void query_settings()
 	answer_frame.put(_settings.powerLevel);
 
 	
-	answer_frame.put(chksum8(answer_frame.sptr(),291+6));//98
-	usart_transmit_frame(answer_frame.sptr(), 291+7);
+	answer_frame.put(chksum8(answer_frame.sptr(),119+6));//98
+	usart_transmit_frame(answer_frame.sptr(), 119+7);
 }
