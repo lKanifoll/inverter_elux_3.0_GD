@@ -16,7 +16,9 @@ extern "C" {
 	
 	
 #define VERSION "12.5.2"		
-	
+#define MAJOR_V 12
+#define MINOR_V 5
+#define DEBUG_V 2
 	
 #define	BALANCE_RESISTOR 		33000.0
 #define	BETA								3950.0 
@@ -181,7 +183,6 @@ uint8_t xw09A_read_data(uint8_t button_num);
 void SysTick_Handler_Callback();
 void smooth_backlight(uint8_t mode);
 void TIMER_Heat_callback();
-void rtc_setup(void);
 void alarm_set(uint8_t minutes);
 void rtc_alarm_callback();
 void receive_uart_int(void);
@@ -191,6 +192,7 @@ uint8_t decToBcd(uint8_t val);
 void refresh_mainscreen();
 void CleanTemperature(int8_t temp, int8_t xo, int8_t yo);
 void set_watchdog(void);
+
 
 #ifdef __cplusplus
 }

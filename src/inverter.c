@@ -165,7 +165,6 @@ bool window_is_opened = 0;
 bool window_was_opened = 0;
 bool in_histeresis = 0;
 bool heat_from_cold = 1;
-static float temp_steinhart = 25;
 bool refresh_system = false;
 uint16_t timer_time_set = 0;
 StateBrightness _stateBrightness = StateBrightness_ON;
@@ -193,6 +192,8 @@ static struct PresetSettings _presetSet = {0, 0};
 static struct TemperatureSettings _tempConfig;
 
 
+
+
 /*
 void drawRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t radius, int16_t thikness)
 {
@@ -207,33 +208,7 @@ void drawRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t 
 }
 */
 
-void rtc_setup(void)
-{
-    /* setup RTC time value */
-    //uint32_t tmp_hh = 0xFF, tmp_mm = 0xFF, tmp_ss = 0xFF;
-		
-		rtc_deinit();
-    rtc_initpara.rtc_factor_asyn = 0x7FU;
-    rtc_initpara.rtc_factor_syn = 0xFFU;
-    rtc_initpara.rtc_year = 0x20;
-    rtc_initpara.rtc_day_of_week = RTC_WEDSDAY;
-    rtc_initpara.rtc_month = RTC_NOV;
-    rtc_initpara.rtc_date = 0x11;
-    rtc_initpara.rtc_display_format = RTC_24HOUR;
-    //rtc_initpara.rtc_am_pm = 0;
 
-    rtc_initpara.rtc_hour = 0x00;
-       
-    rtc_initpara.rtc_minute = 0x00;
-
-    rtc_initpara.rtc_second = 0x00;
-
-    /* RTC current time configuration */
-    if(ERROR == rtc_init(&rtc_initpara)){    
-			//while(1);
-		}
-
-}
 
 void alarm_set(uint8_t minutes)
 {
@@ -331,10 +306,11 @@ void DrawMenu()
 		
 	const uint8_t *icon = NULL;
 	char* text = NULL;
-	
+	int16_t width;
 	switch (currentMenu->items[currentMenu->selected].ID)
 	{
 		case 1:
+		{
 			pxs.setColor(MAIN_COLOR);
 			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
 		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
@@ -343,6 +319,7 @@ void DrawMenu()
 			pxs.print(320 / 2 - width / 2-1, 240/2 - 10, "MODE");			
 			text = "Heat mode";
 			break;
+		}
 		case 2:
 			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
 		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
@@ -400,8 +377,8 @@ void DrawMenu()
 			break;
 		case 32:
 			//icon = img_menu_settimer_png_comp;
-			pxs.drawRectangle(320/2 - 126/2,240/2 - 76/2,126,76);
-		  pxs.drawRectangle(320/2 - 128/2,240/2 - 78/2,128,78);		
+			pxs.drawRectangle(320/2 - 130/2,240/2 - 76/2,130,76);
+		  pxs.drawRectangle(320/2 - 132/2,240/2 - 78/2,132,78);		
 			text = "Set timer";
 			break;
 		case 51:
@@ -758,23 +735,24 @@ void DrawTimeEdit()
 void DrawEditParameter()
 {
 	char buf[30];
-	int16_t width, height;
+	
 	struct Presets* _pr = NULL;
 	if(!(currentMenu->ID == 11 || currentMenu->ID == 12 || currentMenu->ID == 13))
 		pxs.clear();
-
-	
+  int16_t width; 
+  int16_t height;	
 	switch (currentMenu->ID)
 	{
 		case 999:
+
 			pxs.setColor(MAIN_COLOR);
 		  pxs.fillOval(320/2 - 95/2,240/2 - 95/2, 95,95);
 			//pxs.fillRectangle(320/2 - 92/2,240/2 - 84/2,92,84);
 			pxs.setFont(ElectroluxSansRegular36a);
 			pxs.setColor(BG_COLOR);
 			pxs.setBackground(MAIN_COLOR);	
-			int16_t width = pxs.getTextWidth("OK");
-			int16_t height = pxs.getTextLineHeight();
+			width = pxs.getTextWidth("OK");
+			height = pxs.getTextLineHeight();
 		  pxs.print(320 / 2 - width/2-2, 240/2 - height/2, "OK");
 		  pxs.setColor(MAIN_COLOR);
 			pxs.setBackground(BG_COLOR);
@@ -984,7 +962,7 @@ void PrepareEditParameter()
 		case 21: // power auto
 			AcceptParameter();
 			return;
-			break;
+			//break;
 		case 22: // power custom
 			currentMenu->selected = _settings.powerLevel - 1;
 			break;
@@ -1262,11 +1240,13 @@ void AcceptParameter()
 			GoOK();	
 			break;
 		case 53: // custom day
+		{
 			uint8_t select = currentMenu->selected;
 			_selectModeMenu.parent = currentMenu;
 			currentMenu = &_selectModeMenu;
 			currentMenu->selected = _settings.custom.hour[select];
 			break;
+		}
 		case 530: // custom day
 			_settings.custom.hour[currentMenu->parent->selected] = currentMenu->selected;
 			GoOK();
@@ -1594,7 +1574,6 @@ void SetPower(int8_t value)
 			{
 				LL_GPIO_ResetOutputPin(GPIOB, GPIO_PIN_5);
 				delay_1ms(100);
-				
 			}
 			semistor_power = value*2;
 		}		
@@ -1849,13 +1828,16 @@ void beep()
 {
 	if (_settings.soundOn)
 	{
-		//timer_primary_output_config(TIMER16,ENABLE);
-		//timer_enable(TIMER16);
-		timer_channel_output_pulse_value_config(TIMER16,TIMER_CH_0,165);		
-		delay_1ms(20);
-		timer_channel_output_pulse_value_config(TIMER16,TIMER_CH_0,0);
-		//timer_primary_output_config(TIMER16,DISABLE);
-		//timer_disable(TIMER16);
+		for(uint8_t i = 0; i<30; i++)
+		{
+			timer_channel_output_pulse_value_config(TIMER16,TIMER_CH_0,i);
+			delay_1ms(2);
+		}		
+		for(int8_t i = 30; i>=0; i--)
+		{
+			timer_channel_output_pulse_value_config(TIMER16,TIMER_CH_0,i);
+			delay_1ms(3);
+		}
 	}
 }
 
@@ -1875,13 +1857,13 @@ int8_t getTemperature()
 	
 	if (raw >= 50 && raw <= 4000)
 	{
-		float R = BALANCE_RESISTOR * ((4095.0 / raw) - 1);
+		double R = BALANCE_RESISTOR * ((4095.0 / raw) - 1);
 		//double tKelvin = (BETA * ROOM_TEMP) / (BETA + (ROOM_TEMP * std::log(float(R / RESISTOR_ROOM_TEMP))));
 		//double tKelvin = (BETA + (ROOM_TEMP * std::log(float(R / RESISTOR_ROOM_TEMP)))) / (std::log(float(R / RESISTOR_ROOM_TEMP)));
 		//return (int)(tKelvin - 273.15);
-		float steinhart;
+		double steinhart;
 		steinhart = R / RESISTOR_ROOM_TEMP; // (R/Ro)
-		steinhart = std::log(float(steinhart)); // ln(R/Ro)
+		steinhart = std::log(double(steinhart)); // ln(R/Ro)
 		steinhart /= BETA; // 1/B * ln(R/Ro)
 		steinhart += 1.0 / (ROOM_TEMP); // + (1/To)
 		steinhart = 1.0 / steinhart; // Invert
@@ -1897,7 +1879,7 @@ int8_t getTemperature()
 	{
 		return -127;
 	}
-		else if(raw > 4000)
+	else if(raw > 4000)
 	{
 		return 127;
 	}
@@ -1921,21 +1903,11 @@ void DrawWindowOpen()
 
 
 void DrawWifi()
-{
-	if (wifi_status == -1)
-	{
-		if (_blink)
-		{
-			_blink = false;
-			DrawMainScreen();
-		}
-		return;
-	}
-	
+{	
 	if (_timerBlink < GetSystemTick())
 	{
 		_timerBlink = GetSystemTick();
-		if (wifi_status == 2)
+		if (wifi_status == 0)
 		{
 			pxs.setColor(BG_COLOR);
 			if (_settings.workMode == WorkMode_Off)
@@ -1949,27 +1921,18 @@ void DrawWifi()
 			pxs.setColor(MAIN_COLOR);
 			return;
 		}
-	  else if (wifi_status == 0){
-			//_timerBlink += 250;
-		  _timerBlink += 1000;}
-		else if (wifi_status == 2)
-			_timerBlink += 250;		
-		else if (wifi_status == 3)
-			_timerBlink += 500;
-		else if (wifi_status == 4)
+	  else if (wifi_status == 1)
 		{
-			if (_settings.workMode == WorkMode_Off)
-			{
-				pxs.drawCompressedBitmap(15, 59, (uint8_t*)img_wifi_png_comp);
-			}
-			else
-			{
-				pxs.drawCompressedBitmap(_xWifi + 6, 128, (uint8_t*)img_wifi_png_comp);
-			}
-      _timerBlink += 5000;			
-			return;			
+			_timerBlink += 500;
 		}
-		//if (wifi_status != 4)
+		else if (wifi_status == 2)
+		{
+			if (_blink)
+				return;
+			else
+				_blink = false;		
+		}
+
 		_blink = !_blink;
 	
 		if (_settings.workMode == WorkMode_Off)
@@ -2618,9 +2581,6 @@ void deviceON()
 	InitTimer();
 	_timeoutSaveFlash = GetSystemTick();
 	_timerStart = GetSystemTick();
-	
-	if (_settings.heatMode == HeatMode_Auto)
-		SetPower(10);
 }
 
 void deviceOFF()
@@ -2815,9 +2775,6 @@ void loop(void)
 		ResetAllSettings();
 	
   timer_time_set = _settings.timerTime;
-
-
-	
 	
 	pxs.setOrientation(LANDSCAPE);
 	pxs.enableAntialiasing(true);
@@ -2830,7 +2787,6 @@ void loop(void)
 	getTemperature();
 	getTemperature();
 	
-
 	if (_settings.on)
 	{
 		startScreen();
@@ -2843,8 +2799,6 @@ void loop(void)
 	}
 	
 	InitTimer();
-	
-	
 	
 	if (_settings.heatMode == HeatMode_Auto)
 		SetPower(0);
@@ -3179,7 +3133,7 @@ void loop(void)
 			    //smooth_backlight(0);
 					DrawTextAligment(0, 0, SW, SH, "E1", false, false);
 					smooth_backlight(1);
-					query_faults();
+					query_settings();
 				}
 				
 			}
@@ -3246,7 +3200,6 @@ void loop(void)
 				if(_error_fl)
 				{
 					_error_fl = 0;
-					temp_steinhart = 25;
 
 					DrawMainScreen();
 				}
@@ -3292,7 +3245,9 @@ void loop(void)
 					}
 			  }
 				else
+				{
 					power_current = 0;
+				}
 				
 				SetPower(power_current);
 				//====================================================================
@@ -3334,7 +3289,7 @@ void loop(void)
 						powerLevel = 0;
 					
 					power_level_auto = powerLevel;	
-					query_settings();
+					//query_settings();
 				}	
 					if (currentMenu == NULL && !_error && (!window_is_opened))
 					{						

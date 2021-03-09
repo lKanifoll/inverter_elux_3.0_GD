@@ -59,6 +59,18 @@ class Stream
       return *this;
     };
 		
+    Stream& put32(uint32_t d) 
+		{
+			if (good())
+			{
+				*m_cptr++ = d >> 24;
+				*m_cptr++ = d >> 16;
+				*m_cptr++ = d >> 8;
+				*m_cptr++ = d;
+			}
+      return *this;
+    };
+		
     Stream& put_str(uint8_t* data, uint8_t len) 
 		{
 			uint8_t *temp_data = data;

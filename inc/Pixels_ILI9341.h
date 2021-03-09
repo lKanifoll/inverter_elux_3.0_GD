@@ -92,15 +92,15 @@ class Pixels : public PixelsBase
 #endif
 {
 protected:
-    void deviceWriteData(uint8_t high, uint8_t low) {
+    virtual void deviceWriteData(uint8_t high, uint8_t low) {
         writeData(high, low);
     }
 
-    void setRegion(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
-    void quickFill(int b, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
-    void setFillDirection(uint8_t direction);
+    virtual void setRegion(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+    virtual void quickFill(int b, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+    virtual void setFillDirection(uint8_t direction);
 
-    void scrollCmd();
+    virtual void scrollCmd();
 
 public:
     Pixels() : PixelsBase(240, 320) { // ElecFreaks TFT2.2SP shield as default
@@ -111,7 +111,7 @@ public:
         scrollSupported = true;
     }
 
-    void init();
+    virtual void init();
 		
 		void displayOn()
 		{

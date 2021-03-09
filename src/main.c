@@ -37,7 +37,8 @@ OF SUCH DAMAGE.
 #include "main.h"
 #include "inverter.h"
 #include <stdio.h>
-
+#include <string.h>
+#include "crc32.h"
 
 void gpio_config(void);
 void rcu_config(void);
@@ -49,17 +50,23 @@ void pwm_config_buzzer(void);
 void heat_timer_config(void);
 void i2c_config(void);
 void RTC_config(void);
-
-
+uint32_t ntohl(uint32_t const net);
+uint32_t calc_crc32(uint8_t * data, uint32_t size);
 uint32_t sck;
+uint32_t valcrc0 = 0, valcrc1 = 0;
+uint8_t arr8[15] = {0xab, 0xcd, 0x12, 0x34, 0x34, 0x56, 0xcd, 0xef, 0x78, 0x9a, 0x15, 0x24, 0x12, 0x34, 0x12};
+//uint8_t arr8[16] = {0x34, 0x12, 0xcd, 0xab, 0xef, 0xcd, 0x56, 0x34, 0x24, 0x15, 0x9a, 0x78, 0x34, 0x12, 0x34, 0x12};
+uint32_t arr32[4] = {0xabcd1234, 0x3456cdef, 0x789a1524, 0x12341200};
 
 int main(void)
 {
 	systick_config();
+	
 	rcu_config();
+	
 	gpio_config();
 	i2c_config();
-	TUYA_ON;
+	TUYA_OFF;
 	uart_init();
 	spi0_init();
 	adc_config();
@@ -73,8 +80,18 @@ int main(void)
 	
 	RTC_config();
 	delay_1ms(500);
-	//rtc_setup();
+	
+  
+	
+	//crc_deinit();
+
+	//crc_data_register_reset();
+
+	
+	
+	//abcd1234 3456cdef 789a1524 12341234
 	//
+	//3412cdab efcd5634 24159a78 34123412
   //sck = rcu_clock_freq_get(CK_APB1);
 	//sck = rcu_clock_freq_get(CK_SYS);
 	//sck = rcu_clock_freq_get(CK_AHB);
@@ -82,7 +99,10 @@ int main(void)
 	//timer_channel_output_pulse_value_config(TIMER1,TIMER_CH_0,50);
 	//timer_channel_output_pulse_value_config(TIMER16,TIMER_CH_0,500);
 
-	//while(1)
+//	while(1)
+//	{
+		
+//	}
 	
 		//usart_data_transmit(USART1,  (uint8_t)0xff);
 		//while(RESET == usart_flag_get(USART1, USART_FLAG_TBE));
@@ -111,7 +131,7 @@ void rcu_config(void)
 	  rcu_periph_clock_enable(RCU_ADC);
 	  
 	  rcu_periph_clock_enable(RCU_PMU);
-	 
+	  rcu_periph_clock_enable(RCU_CRC);
     // ADCCLK = PCLK2/6 
     rcu_adc_clock_config(RCU_ADCCK_APB2_DIV6);
 		rcu_periph_clock_enable(RCU_WWDGT);
@@ -319,7 +339,7 @@ void pwm_config_buzzer(void)
     timer_initpara.prescaler         = 84-1;
     timer_initpara.alignedmode       = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection  = TIMER_COUNTER_UP;
-    timer_initpara.period            = 2000;
+    timer_initpara.period            = 175;
     timer_initpara.clockdivision     = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 0;
     timer_init(TIMER16,&timer_initpara);
