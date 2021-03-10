@@ -478,10 +478,10 @@ ARM Macro Assembler    Page 8
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=.\objects\startup_gd32f3x0.d -o.\objects\startup_gd32f3x0.o -I.
-\RTE\_inverter_ballu_gd -IC:\Keil_v5\ARM\PACK\GigaDevice\GD32F3x0_DFP\2.0.0\Dev
-ice\Include -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__MICROLIB SETA 1" --pr
-edefine="__UVISION_VERSION SETA 524" --predefine="GD32F330 SETA 1" --list=.\lis
-tings\startup_gd32f3x0.lst ..\startup_gd32f3x0.s
+\RTE\_inverter_elux_gd -IC:\Keil_v5\ARM\PACK\GigaDevice\GD32F3x0_DFP\2.0.0\Devi
+ce\Include -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__MICROLIB SETA 1" --pre
+define="__UVISION_VERSION SETA 524" --predefine="GD32F330 SETA 1" --list=.\list
+ings\startup_gd32f3x0.lst ..\startup_gd32f3x0.s
 
 
 

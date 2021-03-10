@@ -1050,6 +1050,7 @@ void AcceptParameter()
 			break;
 		case 22: // power custom
 			_settings.heatMode = HeatMode_User;
+		  _settings.calendarOn = 0;
 			_settings.powerLevel = currentMenu->selected + 1;
 			GoOK(2);
 			break;
@@ -3081,6 +3082,7 @@ void loop(void)
 		if(refresh_system)
 		{
 			idleTimeout = GetSystemTick();
+			query_settings();
 		}
 		// auto switch off
 		if (_settings.displayAutoOff && !_error && !window_is_opened)
@@ -3203,14 +3205,14 @@ void loop(void)
 
 					DrawMainScreen();
 				}
-				
+				uint8_t powerLevel = 5;
 				//============================================== open window maintance
-				if ((_settings.modeOpenWindow) && (!refresh_system) && (_settings.workMode != WorkMode_Off))
+				if ((_settings.modeOpenWindow) && (!refresh_system) && (_settings.workMode != WorkMode_Off) && (_settings.heatMode == HeatMode_Auto))
 					window_is_opened = f_open_window (temp_current, power_current);
 				
 				//====================================================================
 				//==================================================== power maintance
-				if((!window_is_opened || window_was_opened) && (_settings.workMode != WorkMode_Off))
+				if((!window_is_opened || window_was_opened) && (_settings.workMode != WorkMode_Off) && (_settings.heatMode == HeatMode_Auto))
 				{
 					if (temp_current >= (modeTemp + histeresis_high) && !in_histeresis && !heat_from_cold)
 					{
@@ -3244,6 +3246,23 @@ void loop(void)
 						heat_from_cold = 1;
 					}
 			  }
+				else if((_settings.heatMode == HeatMode_User)  && (_settings.workMode != WorkMode_Off) && _settings.calendarOn == 0)
+				{
+					powerLevel = _settings.powerLevel;
+					
+					if 			(powerLevel == 5)
+						power_current = 20;
+					else if (powerLevel == 4)
+						power_current = 16;
+					else if (powerLevel == 3)
+						power_current = 12;
+					else if (powerLevel == 2)
+						power_current = 8;
+					else if (powerLevel == 1)
+						power_current = 4;
+					else
+						power_current = 0;					
+				}
 				else
 				{
 					power_current = 0;
@@ -3252,24 +3271,25 @@ void loop(void)
 				SetPower(power_current);
 				//====================================================================
 				
-				uint8_t powerLevel = 5;
+				
 				
 				if (_settings.heatMode == HeatMode_User && _settings.calendarOn == 0)
 				{
+					/*
 					powerLevel = _settings.powerLevel;
 					
 					if 			(powerLevel == 5)
-						power_limit = 20;
+						power_current = 20;
 					else if (powerLevel == 4)
-						power_limit = 16;
+						power_current = 16;
 					else if (powerLevel == 3)
-						power_limit = 12;
+						power_current = 12;
 					else if (powerLevel == 2)
-						power_limit = 8;
+						power_current = 8;
 					else if (powerLevel == 1)
-						power_limit = 4;
+						power_current = 4;
 					else
-						power_limit = 0;
+						power_current = 0;*/
 				}
 				else
 				{
@@ -3371,7 +3391,7 @@ void loop(void)
 						
 			if (currentMenu == NULL && !_error)
 			{
-				
+				#ifdef DEBUG
 				char buffer[10];
 				pxs.setColor(BG_COLOR);
 				pxs.fillRectangle(240, 20, 75, 20);
@@ -3380,7 +3400,7 @@ void loop(void)
 				pxs.setFont(ElectroluxSansRegular20a);
 				DrawTextAligment(265, 20, 30, 20, buffer, false);	
 
-				#ifdef DEBUG
+				
 				#endif
 			}
 			

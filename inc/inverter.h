@@ -15,10 +15,10 @@ extern "C" {
 #define SH									240
 	
 	
-#define VERSION "12.5.2"		
+#define VERSION "12.5.5"		
 #define MAJOR_V 12
 #define MINOR_V 5
-#define DEBUG_V 2
+#define DEBUG_V 5
 	
 #define	BALANCE_RESISTOR 		33000.0
 #define	BETA								3950.0 

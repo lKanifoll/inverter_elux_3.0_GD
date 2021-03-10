@@ -81,32 +81,6 @@ int main(void)
 	RTC_config();
 	delay_1ms(500);
 	
-  
-	
-	//crc_deinit();
-
-	//crc_data_register_reset();
-
-	
-	
-	//abcd1234 3456cdef 789a1524 12341234
-	//
-	//3412cdab efcd5634 24159a78 34123412
-  //sck = rcu_clock_freq_get(CK_APB1);
-	//sck = rcu_clock_freq_get(CK_SYS);
-	//sck = rcu_clock_freq_get(CK_AHB);
-  //sck = rcu_clock_freq_get(CK_USART);
-	//timer_channel_output_pulse_value_config(TIMER1,TIMER_CH_0,50);
-	//timer_channel_output_pulse_value_config(TIMER16,TIMER_CH_0,500);
-
-//	while(1)
-//	{
-		
-//	}
-	
-		//usart_data_transmit(USART1,  (uint8_t)0xff);
-		//while(RESET == usart_flag_get(USART1, USART_FLAG_TBE));
-		//delay_1ms(500);
 	
   loop();
 }

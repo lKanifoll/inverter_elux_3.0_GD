@@ -3,7 +3,7 @@
 #include "string.h"
 #include "inverter.h"
 #include "stream.h"
-
+#include "stdlib.h"
 extern void SaveFlash();
 extern void InitTimer();
 extern void DrawMainScreen(uint32_t updater);
@@ -48,20 +48,27 @@ uint32_t calc_crc32(uint8_t * data, uint32_t size)
 	uint32_t convert_size = ((size % 4) ? size / 4 + 1 : size / 4) ;
 	uint32_t *raw_data = new uint32_t[convert_size];
 	uint32_t *data_to_convert = new uint32_t[convert_size];
-	
-	memset(data_to_convert, 0, 20);
+	//memset(data_to_convert, 0, convert_size);
 	//memset(data_to_convert1, 0, 20);
 
+	//uint32_t * raw_data = (uint32_t*) malloc(convert_size);
+	//uint32_t * data_to_convert = (uint32_t*) malloc(convert_size);
+	//static uint32_t raw_data[32];
+	//static uint32_t data_to_convert[32];
+	memset(raw_data, 0, convert_size*sizeof(uint32_t));
+	memset(data_to_convert, 0, convert_size*sizeof(uint32_t));
 	memcpy(raw_data, data, size);
-	
 	for(uint32_t i = 0; i < convert_size; i++)
 	{
 		data_to_convert[i] = ntohl(raw_data[i]);
 	}
 	crc_deinit();	
 	uint32_t crc32_block = crc_block_data_calculate(data_to_convert, convert_size, INPUT_FORMAT_WORD);
+	crc_deinit();	
 	delete []data_to_convert;
 	delete []raw_data;
+	//free(data_to_convert); 
+	//free(raw_data); 
 	return crc32_block;
 }
 
@@ -90,38 +97,19 @@ void usart_transmit_frame(const uint8_t *buff, size_t len)
 
 
 
-		uint16_t payload_len = 0;
-		uint8_t  frame_dir   	= 0;
-		uint16_t device_cmd = 0;
-		uint32_t msq_num = 0;
-		uint8_t  cmd_ver			= 0;
 
+
+uint16_t payload_len 	= 0;
+uint8_t  frame_dir   	= 0;
+uint16_t device_cmd 	= 0;
+uint32_t msq_num 			= 0;
+uint8_t  cmd_ver			= 0;
 
 void receive_uart_int()
 {
-	
-	//static uint8_t i = 0;
-  //static uint8_t recv_counter = 0;
-	/*
-	if(idle_flag_stat==0)
-	{
-		recv_buffer[i++] = usart_data_receive(USART1);
-	}*/
 	if(idle_flag_stat)
 	{
-		/*
-		uint8_t j = 0;
-		
-		for(;recv_counter <= 255;recv_counter++)
-		{
-			if(j == i) break;
-			recv_buffer_compl[recv_counter] = recv_buffer[j++];
-		}
-		//str_len_info = strlen(prod_info);
-		*/
-		// PARSER
-
-    uint16_t pointer = 0;
+    uint16_t pointer 			= 0;
 
 		crc_calc = 0;
 		
@@ -136,18 +124,19 @@ void receive_uart_int()
 				frame_dir   =   recv_buffer[pointer + 9];
 				payload_len = ((recv_buffer[pointer + 10]     << 8)  |  recv_buffer[pointer + 11]);
 				crc = 				((recv_buffer[pointer + payload_len + 12] << 24) | (recv_buffer[pointer + payload_len + 13] << 16) | (recv_buffer[pointer + payload_len + 14] << 8) | recv_buffer[pointer + payload_len + 15]);
+				
 				uint8_t *payload = new uint8_t[payload_len];
 				memcpy(payload, &recv_buffer[pointer + 12], payload_len);
 				
-				uint8_t *raw_data = new uint8_t[payload_len + 12];
-				memcpy(raw_data, &recv_buffer[pointer], payload_len + 12);
+				uint8_t *crc_calc_data = new uint8_t[payload_len + 12];
+				memcpy(crc_calc_data, &recv_buffer[pointer], payload_len + 12);
 /*
-				for(uint8_t ii = 0; ii < (payload_len + 16); ii++)
+				for(uint8_t ii = 0; ii < (payload_len + 12); ii++)
 				{
-					frame[ii] = recv_buffer[pointer + ii];								
+					crc_data_raw[ii] = recv_buffer[pointer + ii];								
 				}
-*/
-				crc_calc = calc_crc32(raw_data, payload_len + 12);
+	*/			
+				crc_calc = calc_crc32(crc_calc_data, payload_len + 12);
 				
 				if(crc == crc_calc)
 				{
@@ -301,6 +290,11 @@ void receive_uart_int()
 							if(_settings.heatMode != heat_mode)
 							{
 								_settings.heatMode = (HeatMode)heat_mode;
+								if(_settings.heatMode == HeatMode_User)
+								{
+									_settings.calendarOn = 0;
+									_settings.workMode = WorkMode_Comfort;
+								}
 								DrawMainScreen();
 								refresh_system = true;								
 							}			
@@ -435,7 +429,7 @@ void receive_uart_int()
 					}
 				}
 				delete []payload;	
-				delete []raw_data;
+				delete []crc_calc_data;
 			}
 			pointer++;
 		}
@@ -443,7 +437,7 @@ void receive_uart_int()
 		rxcount = 0;
 		//i = 0;
 		idle_flag_stat = 0;
-		//_timeoutSaveFlash = GetSystemTick() + SAVE_TIMEOUT;
+		_timeoutSaveFlash = GetSystemTick() + SAVE_TIMEOUT;
 	}
 }
 
