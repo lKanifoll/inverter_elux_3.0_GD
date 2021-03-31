@@ -56,10 +56,15 @@ static MenuItem_t _modeMenu[] = {
 	{13, 0, NULL, 					TempMinus, TempPlus, NULL }  // Antifrezee
 };
 
+//power mode
+static MenuItem_t _powerMode[] = {
+	{211, 0, NULL, 					NULL, NULL, NULL}, // Auto
+	{212, 5, NULL, 					NULL, NULL, NULL}, // Custom
+};
 // Power menu
 static MenuItem_t _powerMenu[] = {
-	{21, 0, NULL, 					NULL, NULL, NULL}, // Auto
-	{22, 5, NULL, 					NULL, NULL, NULL}, // Custom
+	{21, 2, _powerMode, 		NULL, NULL, NULL},
+	{22, 0, NULL, 					On, Off, NULL }, 
 };
 
 // Date&time menu
@@ -131,7 +136,11 @@ uint32_t idleTimeout = 0;
 
 uint8_t _currentPower = 0;
 uint8_t semistor_power = 0;
+	
 int8_t temp_current	= 0;
+int8_t temp_current_ext	= 0;	
+uint8_t cutoff_ext_temp = 0;
+	
 uint8_t power_level_auto = 0;	
 uint8_t powerback_flag = 0;
 uint8_t _currentPowerTicks = 20;
@@ -353,7 +362,7 @@ void DrawMenu()
 			icon = img_menu_mode_anti_png_comp;
 			text = "Anti-frost";
 			break;
-		case 21:
+		case 211:
 			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
 		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
 			pxs.setColor(MAIN_COLOR);
@@ -362,7 +371,7 @@ void DrawMenu()
 			pxs.print(320 / 2 - width / 2, 240/2 - 20, "A");	
 			text = "Auto";
 			break;
-		case 22:
+		case 212:
 			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
 		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
 			pxs.setColor(MAIN_COLOR);
@@ -371,6 +380,23 @@ void DrawMenu()
 			pxs.print(320 / 2 - width / 2-3, 240/2 - 20, "C");
 			text = "Custom";
 			break;
+		case 21:
+			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
+		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
+			pxs.fillRectangle(136,120,7,30);
+			pxs.fillRectangle(150,112,7,38);
+		  pxs.fillRectangle(164,104,7,46);
+			pxs.fillRectangle(178,96 ,7,54);
+			text = "Power mode";
+			break;			
+		case 22:
+			pxs.setColor(MAIN_COLOR);
+			pxs.drawRectangle(320/2 - 76/2,240/2 - 76/2,76,76);
+		  pxs.drawRectangle(320/2 - 78/2,240/2 - 78/2,78,78);
+		  
+			icon = img_power_limit_png_comp;
+			text = "Power limit";
+			break;		
 		case 31:
 			icon = _settings.timerOn ? img_menu_timer_on_png_comp : img_menu_timer_off_png_comp;
 			text = _settings.timerOn ? "Timer is on" : "Timer is off";
@@ -603,7 +629,7 @@ void MenuOK()
 	if (currentMenu->ID == 5)
 	{
 		rtc_current_time_get(&rtc_initpara); 
-		if ((bcdToDec(rtc_initpara.rtc_year) <= 19) && (bcdToDec(rtc_initpara.rtc_month) < 12))
+		if ((bcdToDec(rtc_initpara.rtc_year) <= 20) && (bcdToDec(rtc_initpara.rtc_month) < 12))
 		{
 			old = currentMenu->parent;
 			currentMenu = &_settingsMenu[0];
@@ -767,7 +793,7 @@ void DrawEditParameter()
 			DrawLeftRight();
 			DrawTemperature(_tempConfig.desired, -25, 15);
 			break;
-		case 22: // power custom
+		case 212: // power custom
 			DrawMenuText("Power level");
 
 			width = (currentMenu->selected + 1) * 12 + currentMenu->selected * 20;
@@ -792,6 +818,7 @@ void DrawEditParameter()
 			DrawTextAligment( 20, 70, 100, 100,  "ON",  _onoffSet.parameter, _onoffSet.current,0, MAIN_COLOR, BG_COLOR );
 			DrawTextAligment(200, 70, 100, 100, "OFF", !_onoffSet.parameter,!_onoffSet.current,0, MAIN_COLOR, BG_COLOR );				
 			break;
+		case 22:
 		case 421:
 			pxs.setFont(ElectroluxSansRegular36a);
 			DrawTextAligment( 20, 60, 120, 120, "50%",  _onoffSet.parameter,0,0, MAIN_COLOR, BG_COLOR );
@@ -831,6 +858,11 @@ void DrawEditParameter()
 		
 			width = pxs.getTextWidth(buffer);
 			DrawTextAligment(0, 115, 320, 60, buffer, false);		
+		
+			pxs.setFont(ElectroluxSansRegular17a);
+		  sprintf(buffer, "%s%s   %s%s", "PMU ", VERSION_PMU, "MCU ", VERSION_MCU);
+			width = pxs.getTextWidth(buffer);
+			DrawTextAligment(0, 190, 320, 60, buffer, false);
 			break;	
 		case 51:
 		  rtc_current_time_get(&rtc_initpara);
@@ -959,12 +991,16 @@ void PrepareEditParameter()
 			_tempConfig.min = 3;
 			_tempConfig.max = 7;
 			break;
-		case 21: // power auto
+		case 211: // power auto
 			AcceptParameter();
 			return;
 			//break;
-		case 22: // power custom
+		case 212: // power custom
 			currentMenu->selected = _settings.powerLevel - 1;
+			break;
+		case 22:
+			_onoffSet.current = _settings.half_power;
+			_onoffSet.parameter = _settings.half_power;
 			break;
 		case 31: // timer on/off
 			_onoffSet.current = _settings.timerOn;
@@ -1043,17 +1079,26 @@ void AcceptParameter()
 			_settings.tempAntifrost = _tempConfig.desired;
 			GoOK();
 			break;
-		case 21: // power auto
+		case 211: // power auto
 			_settings.heatMode = HeatMode_Auto;
 		  power_limit = 20;
 			GoOK(2);
 			break;
-		case 22: // power custom
+		case 212: // power custom
 			_settings.heatMode = HeatMode_User;
 		  _settings.calendarOn = 0;
+			_settings.half_power = 0;
 			_settings.powerLevel = currentMenu->selected + 1;
 			GoOK(2);
 			break;
+		case 22:
+			_settings.half_power = _onoffSet.parameter;
+			if(_settings.half_power)
+			{
+				_settings.heatMode = HeatMode_Auto;
+			}
+			GoOK();
+			break;		
 		case 31:
 			_settings.timerOn = _onoffSet.parameter;
 		  if(_settings.timerOn)
@@ -1844,10 +1889,7 @@ void beep()
 
 int8_t getTemperature()
 {
-//	HAL_ADC_Start(&hadc);
-//	HAL_ADC_PollForConversion(&hadc, 100);
-//	uint32_t raw = HAL_ADC_GetValue(&hadc);
-//	HAL_ADC_Stop(&hadc);
+
 	
 	while(adc_flag_get(ADC_FLAG_EOC))
 	{
@@ -1890,15 +1932,18 @@ int8_t getTemperature()
 void DrawWindowOpen()
 {
 	_stateBrightness = StateBrightness_ON;
-	smooth_backlight(1);
+
 	if (_timerBlink < GetSystemTick())
 	{
 		_blink = !_blink;
 		_timerBlink = GetSystemTick() + 500;
-
+		smooth_backlight(0);
 		pxs.clear();
 		if (_blink)
+		{
 			pxs.drawCompressedBitmap(100, 64, (uint8_t*)img_WindowOpen_png_comp);
+			smooth_backlight(1);
+		}
 	}
 }
 
@@ -2177,12 +2222,12 @@ void DrawMainScreen(uint32_t updater)
 
 	if(_settings.half_power)
 	{
-		pxs.drawCompressedBitmap(70, 189, (uint8_t*)img_icon_half_png_comp);
+		pxs.drawCompressedBitmap(72, 189, (uint8_t*)img_icon_half_png_comp);
 	}
 	else
 	{
 		pxs.setColor(BG_COLOR);
-		pxs.fillRectangle(70, 189, 11, 16);
+		pxs.fillRectangle(72, 189, 11, 16);
 	}
 	
 	if (_settings.workMode != WorkMode_Off)
@@ -2230,7 +2275,7 @@ void DrawMainScreen(uint32_t updater)
 				if(i < 2) 
 				{
 					pxs.setColor(powerLevelColors[0]);
-					pxs.fillRectangle(8, 213, i ? 53 : 26, 12);
+					pxs.fillRectangle(11, 213, i ? 53 : 26, 12);
 				}
 				else if((i >= 2) && (i < 4)) 
 				{
@@ -2241,9 +2286,7 @@ void DrawMainScreen(uint32_t updater)
 				{
 					pxs.setColor(powerLevelColors[2]);
 					pxs.fillRectangle(11 + 2 * 53 + 2 * 8, 213, 26, 12);
-				}
-				
-				//pxs.fillRectangle(11 + i * 53 + i * 8, 213, 53, 12);
+				}	
 			}			
 		}
 		else
@@ -2493,8 +2536,10 @@ void startScreen()
   smooth_backlight(1);
 	delay_1ms(2000);
 	smooth_backlight(0);
+	
 	currentMenu = NULL;
 	nextChangeLevel = 0;
+	
 	if (_settings.calendarOn == 1)
 	{
 		_settings.workMode = getCalendarMode();
@@ -3082,7 +3127,7 @@ void loop(void)
 		if(refresh_system)
 		{
 			idleTimeout = GetSystemTick();
-			query_settings();
+			//query_settings();
 		}
 		// auto switch off
 		if (_settings.displayAutoOff && !_error && !window_is_opened)
@@ -3114,8 +3159,15 @@ void loop(void)
 //============================================================================= refrash display	
 		if (((GetSystemTick() > nextChangeLevel) || (refresh_system)) && _settings.on)
 		{	
-
-			temp_current = getTemperature();
+			if(cutoff_ext_temp)
+			{
+				cutoff_ext_temp --;
+				temp_current = temp_current_ext;
+			}
+			else
+			{
+				temp_current = getTemperature();
+			}
 			int8_t modeTemp = getModeTemperature();
 			power_current = _currentPower;
 		
@@ -3322,7 +3374,7 @@ void loop(void)
 									if(i < 2) 
 									{
 										pxs.setColor(powerLevelColors[0]);
-										pxs.fillRectangle(8, 213, i ? 53 : 26, 12);
+										pxs.fillRectangle(11, 213, i ? 53 : 26, 12);
 									}
 									else if((i >= 2) && (i < 4)) 
 									{
@@ -3340,7 +3392,7 @@ void loop(void)
 									pxs.setColor(BG_COLOR);
 									if(i < 2) 
 									{
-										pxs.fillRectangle(i ? 8+26 : 8, 213, 27, 12);
+										pxs.fillRectangle(i ? 11+26 : 11, 213, 27, 12);
 
 									}
 									else if((i >= 2) && (i < 4)) 
@@ -3376,10 +3428,12 @@ void loop(void)
 				{
 					idleTimeout = GetSystemTick();
 					refresh_system = false;
+					query_settings();
 				}
 				else
 				{
-					nextChangeLevel = GetSystemTick() + 60000;			
+					nextChangeLevel = GetSystemTick() + 60000;		
+					query_settings();
 				}					
 			}
 		}
@@ -3398,8 +3452,8 @@ void loop(void)
 				pxs.setColor(MAIN_COLOR);		
 				sprintf(buffer, "%d %d", getTemperature(), _currentPower);			
 				pxs.setFont(ElectroluxSansRegular20a);
-				DrawTextAligment(265, 20, 30, 20, buffer, false);	
-
+				DrawTextAligment(260, 20, 30, 20, buffer, false);	
+				
 				
 				#endif
 			}

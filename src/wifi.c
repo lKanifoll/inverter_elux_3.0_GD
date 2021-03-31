@@ -20,6 +20,9 @@ extern uint32_t idleTimeout;
 extern uint32_t _timeoutSaveFlash;
 extern uint8_t _error;
 extern bool window_is_opened;
+extern int8_t temp_current_ext;	
+extern uint8_t cutoff_ext_temp;
+
 uint8_t rxcount = 0;
 uint8_t idle_count = 0;
 uint32_t crc = 0, crc_calc = 0;
@@ -142,7 +145,8 @@ void receive_uart_int()
 				{
 					if(device_cmd == ID_QUERY)
 					{ 
-						query_settings();						
+						
+						query_settings(0);						
 					}
 					else
 					{
@@ -220,6 +224,13 @@ void receive_uart_int()
 								}
 							}			
 						}		
+						
+						if(device_cmd == ID_CURRTEMP)
+						{
+							temp_current_ext = (payload[0] << 8) | payload[1];
+							cutoff_ext_temp = 3;
+							refresh_system = true;
+						}
 						
 						if(device_cmd == ID_COMFORT)
 						{
@@ -423,7 +434,18 @@ void receive_uart_int()
 						if(device_cmd == ID_WIFI)
 						{							
 							wifi_status = payload[0];
-						}						
+						}		
+						
+						if(device_cmd == ID_HALF_P)
+						{							
+							uint8_t half_p = payload[0];
+							if(_settings.half_power != half_p)
+							{
+								_settings.half_power = half_p;
+							}	
+							DrawMainScreen();
+							refresh_system = true;
+						}				
 						
 						refresh_mainscreen();
 					}
@@ -519,7 +541,7 @@ void query_faults()
 	*/
 }
 
-void query_settings()
+void query_settings(bool self)
 {
 	
 	answer_frame.clear();
@@ -527,7 +549,7 @@ void query_settings()
 	answer_frame.put(HEADER_1B);
 	answer_frame.put(HEADER_2B);
 	answer_frame.put(cmd_ver);
-	//msq_num++;
+	self ? msq_num++ : msq_num;
 	answer_frame.put(msq_num>>24);
 	answer_frame.put(msq_num>>16);
 	answer_frame.put(msq_num>>8);
@@ -536,7 +558,7 @@ void query_settings()
 	answer_frame.put(device_cmd);					
 	answer_frame.put(CMD_OUTPUT);
 	answer_frame.put(0x00);
-	answer_frame.put(0x6E);
+	answer_frame.put(0x72);
 	
 	//switch
 	answer_frame.put(ID_SWITCH);

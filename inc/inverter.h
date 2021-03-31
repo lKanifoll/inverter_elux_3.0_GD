@@ -14,11 +14,12 @@ extern "C" {
 #define SW									320
 #define SH									240
 	
-	
-#define VERSION "12.5.5"		
+#define VERSION_PMU "1.2"
+#define VERSION_MCU "1.0.0"
+#define VERSION "12.6.0"		
 #define MAJOR_V 12
-#define MINOR_V 5
-#define DEBUG_V 5
+#define MINOR_V 6
+#define DEBUG_V 0
 	
 #define	BALANCE_RESISTOR 		33000.0
 #define	BETA								3950.0 
@@ -40,7 +41,7 @@ extern "C" {
 
 #define FlashAddress 0x0801F800
 
-#define PRODUCT_ID		24
+#define PRODUCT_ID		41//24
 
 enum StateBrightness
 {

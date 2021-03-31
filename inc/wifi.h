@@ -41,6 +41,7 @@ extern "C" {
 #define ID_UDID    		0x29
 #define ID_DET_OW    	0x2A
 #define ID_WIFI				0x2B
+#define ID_HALF_P			0x2C
 
 #define ID_QUERY			0xFF
 	
@@ -49,7 +50,7 @@ extern "C" {
 uint8_t chksum8(const uint8_t *buff, size_t len);
 //void receive_uart_int(void);
 void usart_transmit_frame(const uint8_t *buff, size_t len);
-void query_settings();	
+void query_settings(bool self = 1);	
 void reset_wifi_state();
 void query_faults();
 void query_datetime();
