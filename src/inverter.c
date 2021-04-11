@@ -13,7 +13,6 @@
 #include <Pixels_PPI16.h> 
 #include <Pixels_ILI9341.h> 
 #include <stddef.h>     /* offsetof */
-//#include <OpenWindowControl.h>
 #include <wifi.h>
 #define RTC_CLOCK_SOURCE_IRC40K 
 #define BKP_VALUE    0x32F0
@@ -140,6 +139,7 @@ uint8_t semistor_power = 0;
 int8_t temp_current	= 0;
 int8_t temp_current_ext	= 0;	
 uint8_t cutoff_ext_temp = 0;
+uint32_t wifi_active = 0;						  
 	
 uint8_t power_level_auto = 0;	
 uint8_t powerback_flag = 0;
@@ -152,7 +152,7 @@ uint8_t _eventTimer = 0;
 uint8_t _blocked = 0;
 uint32_t _durationClick = 0;
 uint32_t _timeoutSaveFlash = 0;
-
+uint8_t menu_clear_flag=0;
 uint8_t _error = 0;
 uint8_t _error_fl = 0;
 int16_t _xWifi;
@@ -250,7 +250,7 @@ void alarm_set(uint8_t minutes)
 void smooth_backlight(uint8_t mode)
 {
 	if(mode)
-	{
+	{			
 		for(uint16_t i=0;i<(_stateBrightness ? 100:500);i+=5)
 		{
 			timer_channel_output_pulse_value_config(TIMER1,TIMER_CH_0,i);
@@ -497,7 +497,7 @@ void DrawMenu()
 
 void MainScreen()
 {
-	
+	menu_clear_flag = 0;
 	currentMenu = NULL;
 	DrawMainScreen();
 		
@@ -579,9 +579,9 @@ void MenuNext()
 
 void MenuPrev()
 {
-	#ifdef DEBUG
-	printf("menu prev %d\n", currentMenu->ID);
-	#endif
+	
+	
+	
 	
 
 	if (currentMenu->prev != NULL)
@@ -631,9 +631,12 @@ void MenuOK()
 		rtc_current_time_get(&rtc_initpara); 
 		if ((bcdToDec(rtc_initpara.rtc_year) <= 20) && (bcdToDec(rtc_initpara.rtc_month) < 12))
 		{
+			//old = currentMenu->parent;
+			//currentMenu = &_settingsMenu[0];
+			//currentMenu->parent = old;
 			old = currentMenu->parent;
-			currentMenu = &_settingsMenu[0];
-			currentMenu->parent = old;
+			currentMenu = &_datetimeMenu[0];
+			currentMenu->parent = old;			
 		}
 	}
 
@@ -651,7 +654,7 @@ void GoOK(int step = 1)
 {
 	_timeoutSaveFlash = GetSystemTick();
 
-	if ((currentMenu->ID == 411) && (currentMenu->parent->parent->selected == 4))
+	if ((currentMenu->ID == 411) && (currentMenu->parent->selected == 4))
 	{
 		_modeOK.parent = currentMenu->parent;
 		currentMenu = &_datetimeMenu[1];
@@ -668,10 +671,11 @@ void GoOK(int step = 1)
 		pxs.print(320 / 2 - width/2-2, 240/2 - height/2, "OK");
 		pxs.setColor(MAIN_COLOR);
 		pxs.setBackground(BG_COLOR);
+		currentMenu->selected = 0;
 		smooth_backlight(1);
 		delay_1ms(2000);
 	}	
-	else if ((currentMenu->ID == 412) && (currentMenu->parent->parent->selected == 4))
+	else if ((currentMenu->ID == 412) && (currentMenu->parent->selected == 4))
 	{
 		_modeOK.parent = currentMenu->parent;
 		currentMenu = &_mainMenu[4];
@@ -716,20 +720,18 @@ void DrawDateEdit()
 	//DrawTextSelected(30, y, buf_year, (currentMenu->selected == 0), false, 5, 15);
 	//DrawTextSelected(160, y, buf_month, (currentMenu->selected == 1), false, 5, 15);
 	//DrawTextSelected(240, y, buf_day, (currentMenu->selected == 2), false, 5, 15);
-	
+
 	uint8_t widthX = pxs.getTextWidth(buf_year);
 	DrawTextAligment(15, y, widthX + 20, 60, buf_year, (currentMenu->selected == 0),0,0,  /*(currentMenu->selected == 0) ? GREEN_COLOR :*/ MAIN_COLOR, /*(currentMenu->selected == 0) ? MAIN_COLOR   :*/ BG_COLOR );
 	widthX = pxs.getTextWidth(buf_month);
 	DrawTextAligment(150, y, widthX + 20, 60, buf_month, (currentMenu->selected == 1),0,0,  /*(currentMenu->selected == 1) ? GREEN_COLOR :*/ MAIN_COLOR, /*(currentMenu->selected == 1) ? MAIN_COLOR   :*/ BG_COLOR );
 	pxs.getTextWidth(buf_day);
 	DrawTextAligment(230, y, widthX + 20, 60, buf_day,   (currentMenu->selected == 2),0,0,  /*(currentMenu->selected == 2) ? GREEN_COLOR :*/ MAIN_COLOR,  /*(currentMenu->selected == 2) ? MAIN_COLOR :*/ BG_COLOR );
-	
-	
-	
 
 	pxs.setColor(MAIN_COLOR);
 	pxs.setBackground(BG_COLOR);
 	DrawMenuText((currentMenu->selected == 0) ? "Set year" : (currentMenu->selected == 1) ? "Set month" : "Set day");
+
 }
 void DrawTimeEdit()
 {
@@ -742,7 +744,7 @@ void DrawTimeEdit()
 
 	//sprintf(buf, "%02d", _dateTime.tm_min);
 	//DrawTextSelected(320 / 2 + 20, y, buf, (currentMenu->selected == 1), false, 5, 15);
-	
+
 	sprintf(buf, "%02d", _dateTime.tm_hour);
 	uint8_t widthX = pxs.getTextWidth(buf);
 	DrawTextAligment(SW/2 - widthX/2 - 73, y, 70, 60, buf, (currentMenu->selected == 0),0,0,  /*(currentMenu->selected == 0) ? GREEN_COLOR : */MAIN_COLOR, /*(currentMenu->selected == 0) ? MAIN_COLOR : */BG_COLOR );
@@ -756,6 +758,7 @@ void DrawTimeEdit()
 	//pxs.print(320 / 2 - pxs.getTextWidth(":") / 2, y, ":");
 	DrawTextAligment(SW / 2 - pxs.getTextWidth(":") / 2, y, 4, 55, ":",0);
 	DrawMenuText((currentMenu->selected == 0) ? "Set hour" : "Set minute");
+
 }
 
 void DrawEditParameter()
@@ -763,8 +766,15 @@ void DrawEditParameter()
 	char buf[30];
 	
 	struct Presets* _pr = NULL;
-	if(!(currentMenu->ID == 11 || currentMenu->ID == 12 || currentMenu->ID == 13))
-		pxs.clear();
+	if(!(currentMenu->ID == 11 || currentMenu->ID == 12 || currentMenu->ID == 13 ))
+	{
+		if(menu_clear_flag == 0)
+		{
+			pxs.clear();
+		}
+		if(currentMenu->ID == 411 || currentMenu->ID == 412 || currentMenu->ID == 421 || currentMenu->ID == 52 || 
+			 currentMenu->ID == 31 || currentMenu->ID == 43 || currentMenu->ID == 422 || currentMenu->ID == 22 || currentMenu->ID == 32 || currentMenu->ID == 441) menu_clear_flag = 1;
+	}
   int16_t width; 
   int16_t height;	
 	switch (currentMenu->ID)
@@ -872,8 +882,7 @@ void DrawEditParameter()
 				pxs.setColor(MAIN_COLOR);
 				pxs.setFont(ElectroluxSansRegular20a);
 				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y, 50, 30, (char*)_calendarInfo[i].week, false, false, 0);
-				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y + 30, 50, 50, (char*)_calendarPresetName[_settings.calendar[i]], (currentMenu->selected == i), i == (rtc_initpara.rtc_day_of_week -1) ? 1 : 0 , 2, 
-					                 MAIN_COLOR, BG_COLOR );
+				DrawTextAligment(_calendarInfo[i].x, _calendarInfo[i].y + 30, 50, 50, (char*)_calendarPresetName[_settings.calendar[i]], (currentMenu->selected == i), i == (rtc_initpara.rtc_day_of_week -1) ? 1 : 0 , 2);
 			}
 			break;
 		case 510:
@@ -927,7 +936,7 @@ void DrawEditParameter()
 
 					sprintf(buf, "%d", i);
 					if (_pr->hour[i] > 3) _pr->hour[i] = pEco;
-					DrawTextAligment(cX, cY, 42, 32, buf, false, false, ((_pr->hour[i] == 3) ? 2 : 0), _pr->hour[i] == 3 ? MAIN_COLOR : BG_COLOR, modeColors[_pr->hour[i]]);
+					DrawTextAligment(cX, cY, 42, 32, buf, false, false, ((_pr->hour[i] == 3) ? 2 : 0), MAIN_COLOR, modeColors[_pr->hour[i]]);
 
 				}
 			}
@@ -967,12 +976,12 @@ void DrawEditParameter()
 
 void PrepareEditParameter()
 {
-	#ifdef DEBUG
-	printf("PrepareEditParameter %d\n", currentMenu->ID);
-	#endif
 	
-	//RTC_TimeTypeDef sTime;
-	//RTC_DateTypeDef sDate;
+	
+	
+	
+	
+	
 
 	switch (currentMenu->ID)
 	{
@@ -1021,6 +1030,9 @@ void PrepareEditParameter()
 			_dateTime.tm_mday = bcdToDec(rtc_initpara.rtc_date);
 			_dateTime.tm_mon = bcdToDec(rtc_initpara.rtc_month);
 			_dateTime.tm_year = (bcdToDec(rtc_initpara.rtc_year)) < 19 ? 2019 : (bcdToDec(rtc_initpara.rtc_year)) + 2000;
+			_dateTime.tm_hour = bcdToDec(rtc_initpara.rtc_hour);
+			_dateTime.tm_min  = bcdToDec(rtc_initpara.rtc_minute);
+			_dateTime.tm_sec  = bcdToDec(rtc_initpara.rtc_second);
 			currentMenu->selected = 0;
 			break;
 		case 412: // set time
@@ -1098,6 +1110,7 @@ void AcceptParameter()
 				_settings.heatMode = HeatMode_Auto;
 			}
 			GoOK();
+			menu_clear_flag = 0;
 			break;		
 		case 31:
 			_settings.timerOn = _onoffSet.parameter;
@@ -1112,6 +1125,7 @@ void AcceptParameter()
 				InitTimer();
 		  }
 			GoOK();
+			menu_clear_flag = 0;
 			break;
 		case 32:
 			currentMenu->selected++;
@@ -1119,6 +1133,7 @@ void AcceptParameter()
 			{		
 				_settings.timerTime = _dateTime.tm_hour * 60 + _dateTime.tm_min;
 				timer_time_set = _settings.timerTime;
+				smooth_backlight(0);
 				pxs.clear();
 				pxs.setColor(MAIN_COLOR);
 				pxs.fillOval(320/2 - 95/2,240/2 - 95/2, 95,95);
@@ -1130,7 +1145,9 @@ void AcceptParameter()
 				pxs.print(320 / 2 - width/2-2, 240/2 - height/2, "OK");
 				pxs.setColor(MAIN_COLOR);
 				pxs.setBackground(BG_COLOR);
+				smooth_backlight(1);
 				delay_1ms(1000);
+				smooth_backlight(0);
 				pxs.clear();
 				_timeoutSaveFlash = GetSystemTick();
 				idleTimeout = GetSystemTick();	
@@ -1140,7 +1157,9 @@ void AcceptParameter()
 			{
 				_settings.timerTime = _dateTime.tm_hour * 60 + _dateTime.tm_min;
 				timer_time_set = _settings.timerTime;
+				
 				GoOK();
+				menu_clear_flag = 0;
 				InitTimer();
 			}	
 
@@ -1148,6 +1167,7 @@ void AcceptParameter()
 		case 43:
 			_settings.soundOn = _onoffSet.parameter;
 			GoOK();
+		  menu_clear_flag = 0;
 			break;
 		case 411: // date
 			currentMenu->selected++;
@@ -1177,6 +1197,7 @@ void AcceptParameter()
 					_dateTime.tm_mon++;
 					_dateTime.tm_year += 1900;
 				}
+				smooth_backlight(0);
 				pxs.clear();
 				pxs.setColor(MAIN_COLOR);
 				pxs.fillOval(320/2 - 95/2,240/2 - 95/2, 95,95);
@@ -1188,7 +1209,9 @@ void AcceptParameter()
 				pxs.print(320 / 2 - width/2-2, 240/2 - height/2, "OK");
 				pxs.setColor(MAIN_COLOR);
 				pxs.setBackground(BG_COLOR);
+				smooth_backlight(1);
 				delay_1ms(1000);
+				smooth_backlight(0);
 				pxs.clear();
 				_timeoutSaveFlash = GetSystemTick();
 				idleTimeout = GetSystemTick();
@@ -1216,11 +1239,13 @@ void AcceptParameter()
 					rtc_init(&rtc_init_param);
 	
 					GoOK();
+					
 				}
 				else
 				{
 					currentMenu->selected = 0;
 				}
+				menu_clear_flag = 0;
 			}
 			break;
 		case 412: // time
@@ -1235,6 +1260,7 @@ void AcceptParameter()
         //rtc_init_param.rtc_factor_asyn = 0x7FU;
         //rtc_init_param.rtc_factor_syn = 0xFFU;
 				rtc_init(&rtc_init_param);
+				smooth_backlight(0);
 				pxs.clear();
 				pxs.setColor(MAIN_COLOR);
 				pxs.fillOval(320/2 - 95/2,240/2 - 95/2, 95,95);
@@ -1246,7 +1272,9 @@ void AcceptParameter()
 				pxs.print(320 / 2 - width/2-2, 240/2 - height/2, "OK");
 				pxs.setColor(MAIN_COLOR);
 				pxs.setBackground(BG_COLOR);
+				smooth_backlight(1);
 				delay_1ms(1000);
+				smooth_backlight(0);
 				pxs.clear();
 				_timeoutSaveFlash = GetSystemTick();
 				idleTimeout = GetSystemTick();				
@@ -1260,7 +1288,8 @@ void AcceptParameter()
         //rtc_init_param.rtc_factor_asyn = 0x7FU;
         //rtc_init_param.rtc_factor_syn = 0xFFU;
 				rtc_init(&rtc_init_param);
-				GoOK();				
+				GoOK();
+				menu_clear_flag = 0;				
 			}
 			break;
 		case 51: // presets
@@ -1284,6 +1313,7 @@ void AcceptParameter()
 				_settings.workMode = WorkMode_Comfort;
 			}
 			GoOK();	
+			menu_clear_flag = 0;
 			break;
 		case 53: // custom day
 		{
@@ -1324,12 +1354,12 @@ void AcceptParameter()
 				_stateBrightness = StateBrightness_LOW;
 			}
 			GoOK();
-					
+			menu_clear_flag = 0;		
 			break;
 		case 422:
 			_settings.displayAutoOff = _onoffSet.parameter;
 			GoOK();
-			
+			menu_clear_flag = 0;
 			break;
 		case 441: // reset
 			if (!_onoffSet.parameter)
@@ -1343,6 +1373,7 @@ void AcceptParameter()
 				_onoffSet.current = _onoffSet.parameter = 1;
 			else if (currentMenu->selected == 2)
 			{
+				menu_clear_flag = 0;
 				ResetAllSettings();
 				//GoOK();
 				SaveFlash();
@@ -1374,9 +1405,9 @@ void TempPlus()
 
 void DateMinus()
 {
-		#ifdef DEBUG
-	printf("DateMinus\n");
-	#endif
+ 
+ 
+ 
 	
 	
 	if (currentMenu->selected == 2)
@@ -1398,7 +1429,7 @@ void DateMinus()
 	else if (currentMenu->selected == 0)
 	{
 		_dateTime.tm_year--;
-		if (_dateTime.tm_year < 2019)
+		if (_dateTime.tm_year < 2020)
 			_dateTime.tm_year = 2099;
 	}
 	DrawEditParameter();
@@ -1427,7 +1458,7 @@ void DatePlus()
 	{
 		_dateTime.tm_year++;
 		if (_dateTime.tm_year == 2100)
-			_dateTime.tm_year = 2019;
+			_dateTime.tm_year = 2020;
 	}
 	DrawEditParameter();
 }
@@ -1504,7 +1535,7 @@ void On()
 }
 void MenuBack()
 {
-
+	menu_clear_flag = 0;
 	if (currentMenu->parent != NULL)
 	{
 		// if back in schedule to calendar on/off
@@ -1624,7 +1655,7 @@ void SetPower(int8_t value)
 			semistor_power = value*2;
 		}		
 	}
-	if(semistor_power == 20)
+	if(value == 20)
 	{
 		LL_GPIO_SetOutputPin(GPIOB, GPIO_PIN_6);
 	}
@@ -1936,7 +1967,7 @@ void DrawWindowOpen()
 	if (_timerBlink < GetSystemTick())
 	{
 		_blink = !_blink;
-		_timerBlink = GetSystemTick() + 500;
+		_timerBlink = GetSystemTick() + 1000;
 		smooth_backlight(0);
 		pxs.clear();
 		if (_blink)
@@ -1965,6 +1996,7 @@ void DrawWifi()
 				pxs.fillRectangle(_xWifi + 6, 128, 83, 26);
 			}
 			pxs.setColor(MAIN_COLOR);
+			_blink = false;
 			return;
 		}
 	  else if (wifi_status == 1)
@@ -2188,7 +2220,7 @@ void DrawMainScreen(uint32_t updater)
 	}
 
 
-	if ((wifi_status == 4) && (currentMenu == NULL))
+	if ((wifi_status == 2) && (currentMenu == NULL))
 	{
 		if(_settings.workMode == WorkMode_Off)
 			pxs.drawCompressedBitmap(15, 59, (uint8_t*)img_wifi_png_comp);
@@ -2214,10 +2246,10 @@ void DrawMainScreen(uint32_t updater)
 	
 	else if (_settings.calendarOn == 1)
 	{
-		if(_settings.workMode == WorkMode_Off)
-			pxs.drawCompressedBitmap(15, 147, (uint8_t*)img_icon_calendar_png_comp);
-		else
-			pxs.drawCompressedBitmap(15, 80, (uint8_t*)img_icon_calendar_png_comp);
+		pxs.drawCompressedBitmap(15, (_settings.workMode == WorkMode_Off ? 147 : 80) , (uint8_t*)img_icon_calendar_png_comp);
+		
+		
+		
 	}
 
 	if(_settings.half_power)
@@ -2256,7 +2288,7 @@ void DrawMainScreen(uint32_t updater)
 				powerLevel = 5;
 			else if (power_current > 15)
 				powerLevel = 4;
-			else if (power_current >= 10)
+			else if (power_current > 10)
 				powerLevel = 3;
 			else if (power_current > 5)
 				powerLevel = 2;
@@ -2644,7 +2676,7 @@ void deviceOFF()
 	smooth_backlight(0);
 	pxs.displayOff();
 	pxs.clear();
-	query_settings();
+	//query_settings();
 	//InitTimer();
 	_timeoutSaveFlash = GetSystemTick();
 }
@@ -2686,7 +2718,6 @@ bool keyPressed()
 	
 	if (!_settings.blocked && _settings.on)
 	{
-
 		
 		if((_settings.displayAutoOff) && (_stateBrightness == StateBrightness_OFF))
 		{
@@ -2702,14 +2733,21 @@ bool keyPressed()
 			nextChangeLevel = GetSystemTick();
 		}
 		pxs.displayOn();
-		if(currentMenu == NULL)
+		if((_settings.displayAutoOff) && (_stateBrightness == StateBrightness_LOW))
 		{
-
-			//smooth_backlight(1);
+			if(_settings.brightness)
+			{
+				_stateBrightness = StateBrightness_ON;
+				smooth_backlight(1);
+			}
+			else 
+			{
+				_stateBrightness = StateBrightness_LOW;
+			}
+			
 	  }
 	}
-	
-	nextChangeLevel = GetSystemTick() + 5000;
+	nextChangeLevel = GetSystemTick() + 2000;
 	return result;	
 	
 }
@@ -3161,7 +3199,6 @@ void loop(void)
 		{	
 			if(cutoff_ext_temp)
 			{
-				cutoff_ext_temp --;
 				temp_current = temp_current_ext;
 			}
 			else
@@ -3351,7 +3388,7 @@ void loop(void)
 						powerLevel = 5;
 					else if (power_current > 15)
 						powerLevel = 4;
-					else if (power_current >= 10)
+					else if (power_current > 10)
 						powerLevel = 3;
 					else if (power_current > 5)
 						powerLevel = 2;
@@ -3428,12 +3465,16 @@ void loop(void)
 				{
 					idleTimeout = GetSystemTick();
 					refresh_system = false;
-					query_settings();
+					//query_settings();
 				}
 				else
 				{
-					nextChangeLevel = GetSystemTick() + 60000;		
 					query_settings();
+					if(cutoff_ext_temp)
+			    {
+						cutoff_ext_temp --;
+					}					
+					nextChangeLevel = GetSystemTick() + 60000;	
 				}					
 			}
 		}
@@ -3501,7 +3542,13 @@ void loop(void)
 			if (window_is_opened && !window_was_opened)
 				DrawWindowOpen();
 			else
+			{
+				if(wifi_active == GetSystemTick())
+				{
+					wifi_status = 0;
+				}
 				DrawWifi();
+			}
 		}
 	}
 }

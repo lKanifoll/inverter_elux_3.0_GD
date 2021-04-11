@@ -187,7 +187,7 @@ void USART1_IRQHandler(void)
        //     usart_interrupt_disable(USART1, USART_INT_RBNE);
        //}
 			 recv_buffer[rxcount++] = usart_data_receive(USART1);
-				if(rxcount==200) rxcount = 0;
+				if(rxcount==50) rxcount = 0;
 			//receive_uart_int();
 			//usart_interrupt_enable(USART1, USART_INT_IDLE);
 			

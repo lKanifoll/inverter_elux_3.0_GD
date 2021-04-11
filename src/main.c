@@ -214,8 +214,9 @@ void uart_init(void)
 		usart_stop_bit_set(USART1,USART_STB_1BIT);
     usart_receive_config(USART1, USART_RECEIVE_ENABLE);
     usart_transmit_config(USART1, USART_TRANSMIT_ENABLE);
-    usart_dma_receive_config(USART1, USART_DENR_ENABLE);
+    //usart_dma_receive_config(USART1, USART_DENR_ENABLE);
 		usart_baudrate_set(USART1, 9600U);
+	  usart_overrun_disable(USART1);
 	  //usart_halfduplex_enable(USART1);
     usart_enable(USART1);
 	
